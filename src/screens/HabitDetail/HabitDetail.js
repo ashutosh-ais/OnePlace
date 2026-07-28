@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { ScrollView, Text, TouchableOpacity, View, StyleSheet, Modal } from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,13 +10,14 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
 import { Calendar } from 'react-native-calendars';
 import { logHabitCompletion, undoHabitCompletion } from '../../redux/Slice/HabitSlice';
+import ActionSheet from 'react-native-actions-sheet';
 
 const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
   const routeHabit = route.params?.habit || {};
   const dispatch = useDispatch();
   const { habits } = useSelector(state => state.habits);
   const habit = habits.find(h => h.id === routeHabit.id) || routeHabit;
-  const [calendarVisible, setCalendarVisible] = useState(false);
+  const actionSheetRef = useRef(null);
 
   const mainContainerStyles = {
     flex: 1,
@@ -67,7 +68,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
           <ArrowLeft color={BLACK} size={RFValue(24)} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Habit Detail</Text>
-        <TouchableOpacity onPress={() => setCalendarVisible(true)} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => actionSheetRef.current?.show()} style={styles.backBtn}>
           <CalendarIcon color={BLACK} size={RFValue(20)} />
         </TouchableOpacity>
       </View>
@@ -139,32 +140,34 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
         </View>
       </ScrollView>
 
-      {/* Backfill Calendar Modal */}
-      <Modal visible={calendarVisible} transparent animationType="slide" onRequestClose={() => setCalendarVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Backfill History</Text>
-              <TouchableOpacity onPress={() => setCalendarVisible(false)}>
-                <X color={GRAY9} size={RFValue(24)} />
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.modalSubtitle}>Tap any date to mark it as completed or undo a completion. Your streak will be automatically recalculated.</Text>
-            
-            <Calendar
-              markedDates={markedDates}
-              onDayPress={handleDayPress}
-              theme={{
-                todayTextColor: PRIMARY_OS,
-                arrowColor: PRIMARY_OS,
-                textDayFontFamily: REGULAR,
-                textMonthFontFamily: BOLD,
-                textDayHeaderFontFamily: SEMIBOLD,
-              }}
-            />
+      {/* Backfill Calendar Action Sheet */}
+      <ActionSheet 
+        ref={actionSheetRef} 
+        gestureEnabled={true} 
+        containerStyle={styles.actionSheetContainer}
+      >
+        <ScrollView contentContainerStyle={styles.actionSheetScroll} showsVerticalScrollIndicator={false}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Backfill History</Text>
+            <TouchableOpacity onPress={() => actionSheetRef.current?.hide()}>
+              <X color={GRAY9} size={RFValue(24)} />
+            </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
+          <Text style={styles.modalSubtitle}>Tap any date to mark it as completed or undo a completion. Your streak will be automatically recalculated.</Text>
+          
+          <Calendar
+            markedDates={markedDates}
+            onDayPress={handleDayPress}
+            theme={{
+              todayTextColor: PRIMARY_OS,
+              arrowColor: PRIMARY_OS,
+              textDayFontFamily: REGULAR,
+              textMonthFontFamily: BOLD,
+              textDayHeaderFontFamily: SEMIBOLD,
+            }}
+          />
+        </ScrollView>
+      </ActionSheet>
     </View>
   );
 };
@@ -198,8 +201,8 @@ const styles = StyleSheet.create({
   notesBox: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#F9FAFB', padding: RFValue(12), borderRadius: RFValue(8), marginTop: RFValue(8) },
   notesText: { fontFamily: REGULAR, fontSize: RFValue(12), color: '#374151', marginLeft: RFValue(8), flex: 1 },
   
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: RFValue(20) },
-  modalContent: { backgroundColor: WHITE, borderRadius: RFValue(24), padding: RFValue(20) },
+  actionSheetContainer: { borderTopLeftRadius: RFValue(24), borderTopRightRadius: RFValue(24), paddingBottom: RFValue(20) },
+  actionSheetScroll: { padding: RFValue(20) },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: RFValue(8) },
   modalTitle: { fontFamily: BOLD, fontSize: RFValue(18), color: '#111827' },
   modalSubtitle: { fontFamily: REGULAR, fontSize: RFValue(12), color: GRAY9, marginBottom: RFValue(20) },

@@ -159,4 +159,95 @@ export default StyleSheet.create({
   customDayDotSelected: {
     backgroundColor: WHITE,
   },
+
+  // Filter Chips
+  filterRow: {
+    flexDirection: 'row',
+    marginTop: HEIGHT * 0.02,
+    marginBottom: HEIGHT * 0.02,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    backgroundColor: WHITE,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  chipSelected: {
+    backgroundColor: '#FDE047',
+    borderColor: '#FDE047',
+  },
+  chipText: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(13),
+    color: GRAY9,
+  },
+  chipTextSelected: {
+    color: BLACK,
+  },
+
+  // Habit Card
+  cardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: WHITE,
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardIconWrapper: {
+    width: RFValue(48),
+    height: RFValue(48),
+    borderRadius: RFValue(24),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  cardIconText: {
+    fontSize: RFValue(24),
+  },
+  cardMiddle: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontFamily: BOLD,
+    fontSize: RFValue(16),
+    color: BLACK,
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(13),
+    color: '#9CA3AF',
+  },
+  cardRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionBtn: {
+    width: RFValue(36),
+    height: RFValue(36),
+    borderRadius: RFValue(18),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  btnDoc: {
+    backgroundColor: '#FEF2F2',
+  },
+  btnCheck: {
+    backgroundColor: '#FDE047', // using yellow instead of green to match brand, or light red as in prompt it said marks habit complete
+  },
 });

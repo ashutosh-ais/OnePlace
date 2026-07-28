@@ -12,7 +12,7 @@ import {
   User,
   X,
 } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Modal,
   ScrollView,
@@ -22,6 +22,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
@@ -42,14 +43,15 @@ import {
   undoHabitCompletion,
 } from '../../redux/Slice/HabitSlice';
 
-const isHabitForToday = habit => {
+const isHabitScheduledForDate = (habit, dateStr) => {
   if (habit.schedule_type === 'Every Day' || habit.scheduleType === 'Every Day')
     return true;
   if (
     habit.schedule_type === 'Specific Days' ||
     habit.scheduleType === 'Specific Days'
   ) {
-    const todayIndex = new Date().getDay(); // 0 = Sun, 1 = Mon...
+    const d = new Date(dateStr);
+    const todayIndex = d.getDay();
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const todayStr = days[todayIndex];
     const val = habit.schedule_value || habit.scheduleValue || '';
@@ -86,10 +88,109 @@ const MiniHeatmap = ({ history }) => {
   );
 };
 
+const CircularProgressDate = ({ date, isSelected, progress, onPress }) => {
+  const size = RFValue(44);
+  const strokeWidth = 3;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (progress || 0) * circumference;
+
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayName = days[date.getDay()];
+  const dateNum = date.getDate();
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.dateItem}>
+      <Text
+        style={[styles.dayNameText, isSelected && styles.dayNameTextSelected]}
+      >
+        {dayName}
+      </Text>
+      <View style={styles.svgWrapper}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {/* Track */}
+          <SvgCircle
+            stroke="#E5E7EB"
+            fill="none"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            strokeWidth={strokeWidth}
+          />
+          {/* Progress */}
+          <SvgCircle
+            stroke="#FDE047"
+            fill="none"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        </Svg>
+        <View style={styles.dateNumWrapper}>
+          <Text
+            style={[
+              styles.dateNumText,
+              isSelected && styles.dateNumTextSelected,
+            ]}
+          >
+            {dateNum}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   const dispatch = useDispatch();
   const { habits, loading, dashboardView } = useSelector(state => state.habits);
   const { name } = useSelector(state => state.auth);
+
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split('T')[0],
+  );
+  const scrollRef = useRef(null);
+
+  // Generate Dates: start of current month minus 5 days, to today + 5 days
+  const dashboardDates = React.useMemo(() => {
+    const dates = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    startDate.setDate(startDate.getDate() - 5);
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 5);
+
+    let current = new Date(startDate);
+    while (current <= endDate) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }, []);
+
+  // Scroll to selected date initially
+  useEffect(() => {
+    if (scrollRef.current) {
+      const index = dashboardDates.findIndex(
+        d => d.toISOString().split('T')[0] === selectedDate,
+      );
+      if (index > -1) {
+        setTimeout(() => {
+          scrollRef.current?.scrollTo({
+            x: index * RFValue(55),
+            animated: true,
+          });
+        }, 300);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [activeHabit, setActiveHabit] = useState(null); // The habit being completed
   const [metric, setMetric] = useState('');
@@ -109,8 +210,10 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   };
 
   const handleCheckboxTap = habit => {
-    if (habit.completed_today) {
-      dispatch(undoHabitCompletion(habit.id));
+    if (habit.is_completed_on_date) {
+      dispatch(
+        undoHabitCompletion({ habitId: habit.id, dateStr: selectedDate }),
+      );
     } else {
       setActiveHabit(habit);
       setMetric(habit.targetQuantity ? habit.targetQuantity.toString() : '1');
@@ -127,16 +230,38 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
         metric: parseInt(metric) || 1,
         mood,
         notes,
+        dateStr: selectedDate,
       }),
     );
     setActiveHabit(null);
   };
 
-  // Filter habits based on view
-  let displayedHabits = habits;
-  if (dashboardView === 'agenda') {
-    displayedHabits = habits.filter(isHabitForToday);
-  }
+  // Filter habits for the selected date
+  const habitsForDate = habits.filter(h =>
+    isHabitScheduledForDate(h, selectedDate),
+  );
+  const displayedHabits = habitsForDate.map(habit => {
+    const isCompleted =
+      habit.history &&
+      habit.history.some(
+        h => h.date.startsWith(selectedDate) && h.status === 'completed',
+      );
+    return { ...habit, is_completed_on_date: isCompleted };
+  });
+
+  // Calculate completion for the top horizontal scroll
+  const getProgressForDate = dateStr => {
+    const scheduled = habits.filter(h => isHabitScheduledForDate(h, dateStr));
+    if (scheduled.length === 0) return 0;
+    const completed = scheduled.filter(
+      h =>
+        h.history &&
+        h.history.some(
+          hx => hx.date.startsWith(dateStr) && hx.status === 'completed',
+        ),
+    );
+    return completed.length / scheduled.length;
+  };
 
   return (
     <View style={mainContainerStylesWithInsets}>
@@ -150,7 +275,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
         <View>
           <Text style={styles.greeting}>Good Morning, {name || 'Alex'}</Text>
           <Text style={styles.dateText}>
-            {new Date().toLocaleDateString('en-US', {
+            {new Date(selectedDate).toLocaleDateString('en-US', {
               weekday: 'long',
               month: 'short',
               day: 'numeric',
@@ -160,6 +285,31 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
         <TouchableOpacity style={styles.profileBtn}>
           <User color={PRIMARY_OS} size={RFValue(20)} />
         </TouchableOpacity>
+      </View>
+
+      {/* Horizontal Timeline */}
+      <View style={styles.timelineContainer}>
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.timelineScroll}
+        >
+          {dashboardDates.map((date, i) => {
+            const dateStr = date.toISOString().split('T')[0];
+            const isSelected = dateStr === selectedDate;
+            const progress = getProgressForDate(dateStr);
+            return (
+              <CircularProgressDate
+                key={i}
+                date={date}
+                isSelected={isSelected}
+                progress={progress}
+                onPress={() => setSelectedDate(dateStr)}
+              />
+            );
+          })}
+        </ScrollView>
       </View>
 
       {/* Triple View Toggle */}
@@ -258,7 +408,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                       <TouchableOpacity
                         onPress={() => handleCheckboxTap(habit)}
                       >
-                        {habit.completed_today ? (
+                        {habit.is_completed_on_date ? (
                           <CheckCircle2 color={PRIMARY_OS} size={RFValue(20)} />
                         ) : (
                           <Circle color={GRAY9} size={RFValue(20)} />
@@ -274,7 +424,8 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                     <Text
                       style={[
                         styles.gridTitle,
-                        habit.completed_today && styles.habitTitleCompleted,
+                        habit.is_completed_on_date &&
+                          styles.habitTitleCompleted,
                       ]}
                       numberOfLines={2}
                     >
@@ -300,7 +451,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                       <TouchableOpacity
                         onPress={() => handleCheckboxTap(habit)}
                       >
-                        {habit.completed_today ? (
+                        {habit.is_completed_on_date ? (
                           <CheckCircle2 color={PRIMARY_OS} size={RFValue(16)} />
                         ) : (
                           <Circle color={GRAY9} size={RFValue(16)} />
@@ -309,7 +460,8 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                       <Text
                         style={[
                           styles.listTitle,
-                          habit.completed_today && styles.habitTitleCompleted,
+                          habit.is_completed_on_date &&
+                            styles.habitTitleCompleted,
                         ]}
                       >
                         {habit.title}
@@ -332,7 +484,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                 >
                   <View style={styles.habitMain}>
                     <TouchableOpacity onPress={() => handleCheckboxTap(habit)}>
-                      {habit.completed_today ? (
+                      {habit.is_completed_on_date ? (
                         <CheckCircle2 color={PRIMARY_OS} size={RFValue(24)} />
                       ) : (
                         <Circle color={GRAY9} size={RFValue(24)} />
@@ -342,7 +494,8 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                       <Text
                         style={[
                           styles.habitTitle,
-                          habit.completed_today && styles.habitTitleCompleted,
+                          habit.is_completed_on_date &&
+                            styles.habitTitleCompleted,
                         ]}
                       >
                         {habit.title}
@@ -536,6 +689,45 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E7FF',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  // Timeline Styles
+  timelineContainer: {
+    marginBottom: RFValue(15),
+  },
+  timelineScroll: {
+    paddingHorizontal: RFValue(20),
+  },
+  dateItem: {
+    alignItems: 'center',
+    marginRight: RFValue(15),
+  },
+  dayNameText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(12),
+    color: GRAY9,
+    marginBottom: RFValue(8),
+  },
+  dayNameTextSelected: {
+    color: BLACK,
+    fontFamily: SEMIBOLD,
+  },
+  svgWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateNumWrapper: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateNumText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(14),
+    color: BLACK,
+  },
+  dateNumTextSelected: {
+    fontFamily: BOLD,
   },
 
   viewToggleContainer: {
