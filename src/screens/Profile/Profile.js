@@ -1,10 +1,13 @@
-/* eslint-disable react-native/no-inline-styles */
+import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import { STYLES } from '../../constants/config';
 import withLoader from '../../hoc/withLoader';
 import styles from './Profile.styles';
+import { ChevronRight, Dumbbell, Sunrise, BookOpen, Activity, Database, Plane, HeartPulse, Bell } from 'lucide-react-native';
+import { GRAY9, PRIMARY_OS } from '../../constants/color';
+import { RFValue } from 'react-native-responsive-fontsize';
 
 const ProfileWithoutHoc = ({ insets }) => {
   const mainContainerStyles = {
@@ -12,6 +15,20 @@ const ProfileWithoutHoc = ({ insets }) => {
     paddingLeft: insets.left,
     paddingRight: insets.right,
   };
+
+  const templateIcons = [
+    <Dumbbell color={PRIMARY_OS} size={RFValue(24)} />,
+    <Sunrise color={PRIMARY_OS} size={RFValue(24)} />,
+    <BookOpen color={PRIMARY_OS} size={RFValue(24)} />,
+    <Activity color={PRIMARY_OS} size={RFValue(24)} />
+  ];
+
+  const settingsItems = [
+    { name: 'Data Vault & Export', icon: <Database color={GRAY9} size={RFValue(20)} /> },
+    { name: 'Seasonal & Travel Mode', icon: <Plane color={GRAY9} size={RFValue(20)} /> },
+    { name: 'App Integrations (Health)', icon: <HeartPulse color={GRAY9} size={RFValue(20)} /> },
+    { name: 'Notification Engine', icon: <Bell color={GRAY9} size={RFValue(20)} /> },
+  ];
 
   return (
     <View style={[styles.container, mainContainerStyles]}>
@@ -58,7 +75,9 @@ const ProfileWithoutHoc = ({ insets }) => {
                   key={i}
                   style={[styles.templateCard, STYLES.elevation]}
                 >
-                  <Text style={styles.templateIcon}>📋</Text>
+                  <View style={{ marginBottom: RFValue(8) }}>
+                    {templateIcons[i]}
+                  </View>
                   <Text style={styles.templateTitle}>{template}</Text>
                   <Text style={styles.templateSub}>Use Pack</Text>
                 </TouchableOpacity>
@@ -71,15 +90,13 @@ const ProfileWithoutHoc = ({ insets }) => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>OnePlace Settings</Text>
           <View style={[styles.settingsMenu, STYLES.elevation]}>
-            {[
-              'Data Vault & Export',
-              'Seasonal & Travel Mode',
-              'App Integrations (Health)',
-              'Notification Engine',
-            ].map((item, i) => (
-              <TouchableOpacity key={i} style={styles.menuItem}>
-                <Text style={styles.menuItemText}>{item}</Text>
-                <Text style={styles.menuArrow}>{'>'}</Text>
+            {settingsItems.map((item, i) => (
+              <TouchableOpacity key={i} style={[styles.menuItem, { flexDirection: 'row', alignItems: 'center' }]}>
+                <View style={{ marginRight: RFValue(12) }}>
+                  {item.icon}
+                </View>
+                <Text style={[styles.menuItemText, { flex: 1 }]}>{item.name}</Text>
+                <ChevronRight color={GRAY9} size={RFValue(20)} />
               </TouchableOpacity>
             ))}
           </View>

@@ -1,26 +1,19 @@
-/* eslint-disable react-native/no-inline-styles */
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSelector } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import { STYLES } from '../../constants/config';
 import withLoader from '../../hoc/withLoader';
 import styles from './Calendar.styles';
-
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-// Dummy dates for current month
-const DATES = Array.from({ length: 31 }, (_, i) => ({
-  day: i + 1,
-  status:
-    Math.random() > 0.8
-      ? 'missed'
-      : Math.random() > 0.2
-      ? 'completed'
-      : 'frozen',
-}));
+import { Calendar } from 'react-native-calendars';
+import { PRIMARY_OS, WHITE, GRAY9, BLACK } from '../../constants/color';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
 
 const CalendarWithoutHoc = ({ insets }) => {
-  const [selectedDate, setSelectedDate] = useState(24);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const { habits } = useSelector(state => state.habits);
 
   const mainContainerStyles = {
     paddingTop: insets.top,
@@ -28,18 +21,36 @@ const CalendarWithoutHoc = ({ insets }) => {
     paddingRight: insets.right,
   };
 
-  const getStatusColor = status => {
-    switch (status) {
-      case 'completed':
-        return '#10B981'; // GREEN
-      case 'missed':
-        return '#EF4444'; // RED
-      case 'frozen':
-        return '#3B82F6'; // BLUE
-      default:
-        return '#E5E7EB';
+  // Build marked dates
+  const markedDates = {};
+  habits.forEach(habit => {
+    if (habit.history) {
+      habit.history.forEach(entry => {
+        if (entry.status === 'completed') {
+          const dateStr = entry.date.split('T')[0];
+          if (!markedDates[dateStr]) {
+            markedDates[dateStr] = { marked: true, dotColor: PRIMARY_OS };
+          }
+        }
+      });
     }
-  };
+  });
+
+  // Ensure selected date overrides or merges with marked
+  if (markedDates[selectedDate]) {
+    markedDates[selectedDate] = { ...markedDates[selectedDate], selected: true, selectedColor: PRIMARY_OS };
+  } else {
+    markedDates[selectedDate] = { selected: true, selectedColor: PRIMARY_OS };
+  }
+
+  // Get habits completed on selected date
+  const habitsOnSelectedDate = habits.filter(habit => {
+    if (!habit.history) return false;
+    return habit.history.some(entry => entry.date.startsWith(selectedDate) && entry.status === 'completed');
+  });
+
+  const selectedDateObj = new Date(selectedDate);
+  const displayDate = selectedDateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' });
 
   return (
     <View style={[styles.container, mainContainerStyles]}>
@@ -47,7 +58,7 @@ const CalendarWithoutHoc = ({ insets }) => {
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Timeline</Text>
-        <TouchableOpacity style={styles.todayBtn}>
+        <TouchableOpacity style={styles.todayBtn} onPress={() => setSelectedDate(new Date().toISOString().split('T')[0])}>
           <Text style={styles.todayBtnText}>Today</Text>
         </TouchableOpacity>
       </View>
@@ -56,86 +67,46 @@ const CalendarWithoutHoc = ({ insets }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        {/* Calendar Card */}
-        <View style={[styles.calendarCard, STYLES.elevation]}>
-          <View style={styles.monthSelector}>
-            <TouchableOpacity>
-              <Text style={styles.arrowText}>{'<'}</Text>
-            </TouchableOpacity>
-            <Text style={styles.monthText}>October 2026</Text>
-            <TouchableOpacity>
-              <Text style={styles.arrowText}>{'>'}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.weekdaysRow}>
-            {WEEKDAYS.map(day => (
-              <Text key={day} style={styles.weekdayText}>
-                {day}
-              </Text>
-            ))}
-          </View>
-
-          <View style={styles.datesGrid}>
-            {DATES.map((item, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.dateCell,
-                  selectedDate === item.day && styles.dateCellSelected,
-                ]}
-                onPress={() => setSelectedDate(item.day)}
-              >
-                <Text
-                  style={[
-                    styles.dateText,
-                    selectedDate === item.day && styles.dateTextSelected,
-                  ]}
-                >
-                  {item.day}
-                </Text>
-                <View
-                  style={[
-                    styles.statusDot,
-                    { backgroundColor: getStatusColor(item.status) },
-                  ]}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
+        <View style={[styles.calendarCard, STYLES.elevation, { padding: 0, overflow: 'hidden' }]}>
+          <Calendar
+            current={selectedDate}
+            markedDates={markedDates}
+            onDayPress={(day) => setSelectedDate(day.dateString)}
+            theme={{
+              todayTextColor: PRIMARY_OS,
+              arrowColor: PRIMARY_OS,
+              textDayFontFamily: REGULAR,
+              textMonthFontFamily: BOLD,
+              textDayHeaderFontFamily: SEMIBOLD,
+            }}
+          />
         </View>
 
         {/* Selected Date Details */}
         <View style={styles.detailsSection}>
           <Text style={styles.sectionTitle}>
-            October {selectedDate} Overview
+            {displayDate} Overview
           </Text>
 
-          <View style={[styles.habitRow, STYLES.elevation]}>
-            <View style={styles.habitInfo}>
-              <Text style={styles.habitTitle}>Morning Meditation</Text>
-              <Text style={styles.habitMeta}>Completed • 07:15 AM</Text>
-            </View>
-            <View style={[styles.statusBadge, { backgroundColor: '#D1FAE5' }]}>
-              <Text style={[styles.statusBadgeText, { color: '#065F46' }]}>
-                Done
-              </Text>
-            </View>
-          </View>
-
-          <View style={[styles.habitRow, STYLES.elevation]}>
-            <View style={styles.habitInfo}>
-              <Text style={styles.habitTitle}>Read 20 Pages</Text>
-              <Text style={styles.habitMeta}>
-                Frozen (Token Used) • Recovered streak
-              </Text>
-            </View>
-            <View style={[styles.statusBadge, { backgroundColor: '#DBEAFE' }]}>
-              <Text style={[styles.statusBadgeText, { color: '#1E40AF' }]}>
-                Frozen
-              </Text>
-            </View>
-          </View>
+          {habitsOnSelectedDate.length === 0 ? (
+            <Text style={{ fontFamily: REGULAR, color: GRAY9, fontSize: RFValue(12), marginTop: RFValue(10) }}>
+              No habits completed on this date.
+            </Text>
+          ) : (
+            habitsOnSelectedDate.map(habit => (
+              <View key={habit.id} style={[styles.habitRow, STYLES.elevation]}>
+                <View style={styles.habitInfo}>
+                  <Text style={styles.habitTitle}>{habit.title}</Text>
+                  <Text style={styles.habitMeta}>{habit.category_name || habit.category}</Text>
+                </View>
+                <View style={[styles.statusBadge, { backgroundColor: '#D1FAE5' }]}>
+                  <Text style={[styles.statusBadgeText, { color: '#065F46' }]}>
+                    Done
+                  </Text>
+                </View>
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
     </View>

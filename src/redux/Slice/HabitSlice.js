@@ -1,34 +1,81 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getDBConnection, getHabits, getCategories, addHabit, addCompletion, deleteHabit, seedCategories } from '../../database/DatabaseHelper';
+import { getDBConnection, getHabits, getCategories, addHabit, addCompletion, deleteHabit, getCompletions, addCategory, removeCompletion } from '../../database/DatabaseHelper';
 
 export const initializeDatabase = createAsyncThunk(
   'habits/initializeDatabase',
   async () => {
     const db = await getDBConnection();
-    await seedCategories(db);
     const categories = await getCategories(db);
     const habits = await getHabits(db);
-    return { categories, habits };
+    
+    // For each habit, fetch its history to build the rich Redux object
+    const habitsWithHistory = await Promise.all(habits.map(async (habit) => {
+      const completions = await getCompletions(db, habit.id);
+      
+      // Transform completions into the expected history format
+      const history = completions.map(c => ({
+        date: c.completed_at,
+        status: 'completed',
+        metric: c.metric,
+        mood: c.mood,
+        notes: c.notes,
+      }));
+
+      // Check if completed today
+      const todayStr = new Date().toISOString().split('T')[0];
+      const completed_today = history.some(h => h.date.startsWith(todayStr));
+
+      return {
+        ...habit,
+        history,
+        completed_today,
+        consistencyScore: habit.streak > 0 ? Math.min(100, habit.streak * 5) : 0 // Basic calculation
+      };
+    }));
+
+    return { categories, habits: habitsWithHistory };
   }
 );
 
-export const createNewHabit = createAsyncThunk(
-  'habits/createNewHabit',
-  async ({ categoryId, title, scheduleType }, { dispatch }) => {
+export const createNewCategory = createAsyncThunk(
+  'habits/createNewCategory',
+  async (name, { dispatch }) => {
     const db = await getDBConnection();
-    await addHabit(db, categoryId, title, scheduleType);
-    const habits = await getHabits(db);
-    return habits;
+    await addCategory(db, name);
+    dispatch(initializeDatabase()); // Refresh
   }
 );
 
-export const markHabitCompleted = createAsyncThunk(
-  'habits/markHabitCompleted',
-  async (habitId, { dispatch }) => {
+export const createRichHabit = createAsyncThunk(
+  'habits/createRichHabit',
+  async ({ categoryId, title, scheduleType, scheduleValue, targetQuantity, unit, reminderTime, checklists }, { dispatch }) => {
     const db = await getDBConnection();
-    await addCompletion(db, habitId);
-    const habits = await getHabits(db);
-    return habits;
+    await addHabit(db, categoryId, title, scheduleType, scheduleValue, targetQuantity, unit, reminderTime, checklists);
+    dispatch(initializeDatabase());
+  }
+);
+
+export const logHabitCompletion = createAsyncThunk(
+  'habits/logHabitCompletion',
+  async (payload, { dispatch }) => {
+    const { id, metric, mood, notes, dateStr } = payload;
+    const db = await getDBConnection();
+    await addCompletion(db, id, metric, mood, notes, dateStr);
+    dispatch(initializeDatabase());
+  }
+);
+
+export const undoHabitCompletion = createAsyncThunk(
+  'habits/undoHabitCompletion',
+  async (payload, { dispatch }) => {
+    const db = await getDBConnection();
+    // Allow either passing a raw ID for today, or an object {habitId, dateStr}
+    if (typeof payload === 'object') {
+      await removeCompletion(db, payload.habitId, payload.dateStr);
+    } else {
+      await removeCompletion(db, payload);
+    }
+    dispatch(initializeDatabase());
   }
 );
 
@@ -37,8 +84,7 @@ export const removeHabit = createAsyncThunk(
   async (habitId, { dispatch }) => {
     const db = await getDBConnection();
     await deleteHabit(db, habitId);
-    const habits = await getHabits(db);
-    return habits;
+    dispatch(initializeDatabase());
   }
 );
 
@@ -46,12 +92,18 @@ const initialState = {
   habits: [],
   categories: [],
   loading: false,
+  freezeTokens: 3, // Global static setting for now
+  dashboardView: 'agenda', // 'agenda' | 'list' | 'grid'
 };
 
 const habitSlice = createSlice({
   name: 'habits',
   initialState,
-  reducers: {},
+  reducers: {
+    setDashboardView: (state, action) => {
+      state.dashboardView = action.payload;
+    }
+  },
   extraReducers: builder => {
     builder
       .addCase(initializeDatabase.pending, state => {
@@ -62,16 +114,14 @@ const habitSlice = createSlice({
         state.categories = action.payload.categories;
         state.habits = action.payload.habits;
       })
-      .addCase(createNewHabit.fulfilled, (state, action) => {
-        state.habits = action.payload;
+      .addCase(createRichHabit.pending, state => {
+        state.loading = true;
       })
-      .addCase(markHabitCompleted.fulfilled, (state, action) => {
-        state.habits = action.payload;
-      })
-      .addCase(removeHabit.fulfilled, (state, action) => {
-        state.habits = action.payload;
+      .addCase(logHabitCompletion.pending, state => {
+        state.loading = true;
       });
   },
 });
 
+export const { setDashboardView } = habitSlice.actions;
 export default habitSlice.reducer;
