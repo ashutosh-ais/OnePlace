@@ -1,49 +1,46 @@
-import React, { useEffect, useState } from 'react';
 import {
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-  StyleSheet,
-  Modal,
-  TextInput,
-  Dimensions,
-} from 'react-native';
-import { withSafeAreaInsets } from 'react-native-safe-area-context';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  logHabitCompletion,
-  undoHabitCompletion,
-  setDashboardView,
-} from '../../redux/Slice/HabitSlice';
-import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
-import {
-  BACKGROUND,
-  WHITE,
-  PRIMARY_OS,
-  GRAY9,
-  INPUT_BORDER,
-  BLACK,
-} from '../../constants/color';
-import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
-import { RFValue } from 'react-native-responsive-fontsize';
-import withLoader from '../../hoc/withLoader';
-import {
+  CalendarCheck,
   CheckCircle2,
   Circle,
   Flame,
+  Frown,
+  LayoutGrid,
+  List,
+  Meh,
+  Smile,
   Target,
   User,
   X,
-  Smile,
-  Frown,
-  Meh,
-  LayoutGrid,
-  List,
-  CalendarCheck,
 } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
+import React, { useEffect, useState } from 'react';
+import {
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { withSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch, useSelector } from 'react-redux';
+import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
+import {
+  BACKGROUND,
+  BLACK,
+  GRAY9,
+  INPUT_BORDER,
+  PRIMARY_OS,
+  WHITE,
+} from '../../constants/color';
+import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
+import withLoader from '../../hoc/withLoader';
+import {
+  logHabitCompletion,
+  setDashboardView,
+  undoHabitCompletion,
+} from '../../redux/Slice/HabitSlice';
 
 const isHabitForToday = habit => {
   if (habit.schedule_type === 'Every Day' || habit.scheduleType === 'Every Day')

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View, StyleSheet, Modal } from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import withLoader from '../../hoc/withLoader';
 import { ArrowLeft, CheckCircle2, XCircle, Snowflake, MessageSquare, Calendar as CalendarIcon, X } from 'lucide-react-native';
@@ -12,8 +12,10 @@ import { Calendar } from 'react-native-calendars';
 import { logHabitCompletion, undoHabitCompletion } from '../../redux/Slice/HabitSlice';
 
 const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
-  const { habit } = route.params || {};
+  const routeHabit = route.params?.habit || {};
   const dispatch = useDispatch();
+  const { habits } = useSelector(state => state.habits);
+  const habit = habits.find(h => h.id === routeHabit.id) || routeHabit;
   const [calendarVisible, setCalendarVisible] = useState(false);
 
   const mainContainerStyles = {

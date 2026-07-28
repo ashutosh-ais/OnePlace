@@ -106,10 +106,26 @@ export const getHabits = async db => {
       ORDER BY Habits.created_at DESC
     `;
     const results = await db.executeSql(query);
+    
+    const completionsRes = await db.executeSql(`SELECT habit_id, date(completed_at) as date, metric, mood, notes FROM Completions`);
+    const allCompletions = {};
+    for (let i = 0; i < completionsRes[0].rows.length; i++) {
+      const row = completionsRes[0].rows.item(i);
+      if (!allCompletions[row.habit_id]) {
+        allCompletions[row.habit_id] = [];
+      }
+      allCompletions[row.habit_id].push({ ...row, status: 'completed' });
+    }
+
+    const d = new Date();
+    const todayStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
     results.forEach(result => {
       for (let index = 0; index < result.rows.length; index++) {
         const item = result.rows.item(index);
         item.checklists = item.checklists ? JSON.parse(item.checklists) : [];
+        item.history = allCompletions[item.id] || [];
+        item.completed_today = item.history.some(h => h.date.startsWith(todayStr));
         habits.push(item);
       }
     });

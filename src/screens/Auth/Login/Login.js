@@ -34,7 +34,7 @@ const LoginWithoutHoc = ({ navigation, setLoading, insets }) => {
     setTimeout(() => {
       setLoading(false);
       navigation.navigate('OTP', { phoneNumber: phone });
-    }, 1200);
+    }, 1000);
   };
 
   return (

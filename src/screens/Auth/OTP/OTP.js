@@ -54,7 +54,7 @@ const OTPWithoutHoc = ({ navigation, route, setLoading, insets }) => {
       setLoading(false);
       // Replace the stack so user can't go back to OTP screen
       navigation.replace('MainTabs');
-    }, 1500);
+    }, 1000);
   };
 
   return (

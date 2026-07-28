@@ -14,7 +14,7 @@ export const initializeDatabase = createAsyncThunk(
       
       // Transform completions into the expected history format
       const history = completions.map(c => ({
-        date: c.completed_at,
+        date: c.completed_at.substring(0, 10),
         status: 'completed',
         metric: c.metric,
         mood: c.mood,
