@@ -1,0 +1,12 @@
+export const BLACK = '#000000';
+export const WHITE = '#FFFFFF';
+export const BACKGROUND = '#F8F9FA'; // Clean OS look
+export const PRIMARY_OS = '#2563EB'; // Blue for OnePlace
+export const BUTTON_COLOR = '#111827';
+export const GRAY9 = '#9CA3AF';
+export const GRAY_LIGHT = '#F3F4F6';
+export const INPUT_BORDER = '#E5E7EB';
+export const PLACEHOLDER_TEXT_COLOR = '#9CA3AF';
+export const RED = '#EF4444';
+export const GREEN_SUCCESS = '#10B981';
+export const WARNING_ORANGE = '#F59E0B';

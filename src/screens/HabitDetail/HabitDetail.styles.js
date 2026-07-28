@@ -1,0 +1,133 @@
+import { StyleSheet } from 'react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
+import {
+  BACKGROUND,
+  BLACK,
+  GRAY9,
+  GREEN_SUCCESS,
+  INPUT_BORDER,
+  PRIMARY_OS,
+  WHITE,
+} from '../../constants/color';
+import { HEIGHT } from '../../constants/config';
+import { BOLD, INTER, SEMIBOLD } from '../../constants/fontfamily';
+
+export default StyleSheet.create({
+  container: { flex: 1, backgroundColor: BACKGROUND },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: '5%',
+    paddingVertical: HEIGHT * 0.015,
+  },
+  backBtn: { padding: 5 },
+  backText: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: PRIMARY_OS },
+  headerTitle: { fontFamily: SEMIBOLD, fontSize: RFValue(16), color: BLACK },
+  editText: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: PRIMARY_OS },
+  content: { paddingHorizontal: '5%', paddingBottom: HEIGHT * 0.15 },
+  titleSection: { marginTop: HEIGHT * 0.02, marginBottom: HEIGHT * 0.03 },
+  categoryBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  categoryText: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(10),
+    color: PRIMARY_OS,
+  },
+  habitTitle: { fontFamily: BOLD, fontSize: RFValue(24), color: BLACK },
+  scheduleText: {
+    fontFamily: INTER,
+    fontSize: RFValue(12),
+    color: GRAY9,
+    marginTop: 4,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: HEIGHT * 0.03,
+  },
+  statCard: {
+    backgroundColor: WHITE,
+    borderRadius: 12,
+    padding: 15,
+    width: '31%',
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontFamily: INTER,
+    fontSize: RFValue(9),
+    color: GRAY9,
+    textAlign: 'center',
+  },
+  statValue: {
+    fontFamily: BOLD,
+    fontSize: RFValue(20),
+    color: BLACK,
+    marginTop: 4,
+  },
+  statSub: { fontSize: RFValue(10), color: GRAY9, fontFamily: INTER },
+  section: { marginBottom: HEIGHT * 0.03 },
+  sectionTitle: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(16),
+    color: BLACK,
+    marginBottom: 12,
+  },
+  card: { backgroundColor: WHITE, borderRadius: 12, padding: 15 },
+  checklistItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: INPUT_BORDER,
+    marginRight: 12,
+  },
+  checkboxActive: {
+    backgroundColor: GREEN_SUCCESS,
+    borderColor: GREEN_SUCCESS,
+  },
+  checklistText: { fontFamily: INTER, fontSize: RFValue(14), color: BLACK },
+  checklistCompleted: { textDecorationLine: 'line-through', color: GRAY9 },
+  noteInput: {
+    backgroundColor: WHITE,
+    borderRadius: 12,
+    padding: 15,
+    height: HEIGHT * 0.15,
+    textAlignVertical: 'top',
+    fontFamily: INTER,
+    fontSize: RFValue(13),
+    color: BLACK,
+  },
+  bottomBar: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: WHITE,
+    borderTopWidth: 1,
+    borderColor: INPUT_BORDER,
+    paddingHorizontal: '5%',
+    paddingTop: 15,
+  },
+  completeBtn: {
+    backgroundColor: GREEN_SUCCESS,
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  completeBtnText: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(14),
+    color: WHITE,
+  },
+});
