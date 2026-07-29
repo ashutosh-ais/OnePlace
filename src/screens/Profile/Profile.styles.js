@@ -8,97 +8,183 @@ import {
   PRIMARY_OS,
   GRAY9,
   INPUT_BORDER,
-  WARNING_ORANGE,
 } from '../../constants/color';
-import { INTER, SEMIBOLD, BOLD } from '../../constants/fontfamily';
+import { REGULAR, SEMIBOLD, BOLD } from '../../constants/fontfamily';
 
 export default StyleSheet.create({
   container: { flex: 1, backgroundColor: BACKGROUND },
   header: { paddingHorizontal: '5%', paddingVertical: HEIGHT * 0.02 },
   headerTitle: { fontFamily: BOLD, fontSize: RFValue(22), color: BLACK },
-  content: { paddingHorizontal: '5%', paddingBottom: HEIGHT * 0.1 },
-  levelCard: {
-    backgroundColor: WHITE,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: HEIGHT * 0.03,
+  content: {
+    paddingHorizontal: '5%',
+    paddingBottom: HEIGHT * 0.15,
   },
-  profileHeader: {
+
+  // ─── User Card ───────────────────────────────────────────────────────────
+  userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    backgroundColor: WHITE,
+    borderRadius: RFValue(16),
+    padding: RFValue(20),
+    marginBottom: RFValue(20),
+    borderWidth: 1,
+    borderColor: INPUT_BORDER,
   },
   avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: RFValue(56),
+    height: RFValue(56),
+    borderRadius: RFValue(28),
     backgroundColor: PRIMARY_OS,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 15,
+    marginRight: RFValue(16),
   },
-  avatarText: { color: WHITE, fontFamily: BOLD, fontSize: RFValue(20) },
-  userInfo: { flex: 1 },
-  userName: { fontFamily: BOLD, fontSize: RFValue(18), color: BLACK },
-  userTitle: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(12),
-    color: WARNING_ORANGE,
-    marginTop: 4,
-  },
-  xpContainer: { marginTop: 10 },
-  xpHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  xpText: { fontFamily: BOLD, fontSize: RFValue(14), color: PRIMARY_OS },
-  xpGoal: { fontFamily: INTER, fontSize: RFValue(12), color: GRAY9 },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: PRIMARY_OS },
-  section: { marginBottom: HEIGHT * 0.03 },
-  sectionTitle: {
-    fontFamily: SEMIBOLD,
+  avatarText: {
+    color: WHITE,
+    fontFamily: BOLD,
     fontSize: RFValue(16),
-    color: BLACK,
-    marginBottom: 15,
+    letterSpacing: 1,
   },
-  templateCard: {
+  userInfo: { flex: 1 },
+  phoneNumber: {
+    fontFamily: BOLD,
+    fontSize: RFValue(17),
+    color: BLACK,
+    marginBottom: RFValue(4),
+  },
+  memberSince: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(12),
+    color: GRAY9,
+  },
+
+  // ─── Stats Row ──────────────────────────────────────────────────────────
+  statsRow: {
+    flexDirection: 'row',
+    marginBottom: RFValue(24),
+    gap: RFValue(10),
+  },
+  statCard: {
+    flex: 1,
     backgroundColor: WHITE,
-    borderRadius: 12,
-    padding: 15,
-    marginRight: 15,
-    width: RFValue(130),
+    borderRadius: RFValue(14),
+    padding: RFValue(14),
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: INPUT_BORDER,
   },
-  templateIcon: { fontSize: RFValue(24), marginBottom: 10 },
-  templateTitle: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(13),
+  statCardMiddle: {
+    // visual emphasis for center card
+    borderColor: '#FED7AA',
+    backgroundColor: '#FFF7ED',
+  },
+  statIconWrap: {
+    marginBottom: RFValue(6),
+  },
+  statNumber: {
+    fontFamily: BOLD,
+    fontSize: RFValue(22),
     color: BLACK,
-    marginBottom: 5,
+    marginBottom: RFValue(2),
   },
-  templateSub: {
+  statLabel: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(10),
-    color: PRIMARY_OS,
+    color: GRAY9,
+    textAlign: 'center',
   },
-  settingsMenu: {
+
+  // ─── Habits List ─────────────────────────────────────────────────────────
+  section: { marginBottom: RFValue(24) },
+  sectionTitle: {
+    fontFamily: BOLD,
+    fontSize: RFValue(16),
+    color: BLACK,
+    marginBottom: RFValue(12),
+  },
+  habitList: {
     backgroundColor: WHITE,
-    borderRadius: 12,
+    borderRadius: RFValue(14),
+    borderWidth: 1,
+    borderColor: INPUT_BORDER,
     overflow: 'hidden',
   },
-  menuItem: {
+  habitRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    paddingHorizontal: RFValue(16),
+    paddingVertical: RFValue(14),
     borderBottomWidth: 1,
     borderBottomColor: INPUT_BORDER,
   },
-  menuItemText: { fontFamily: INTER, fontSize: RFValue(14), color: BLACK },
-  menuArrow: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: GRAY9 },
+  habitInfo: { flex: 1, marginRight: RFValue(12) },
+  habitTitle: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(14),
+    color: BLACK,
+    marginBottom: RFValue(3),
+  },
+  habitMeta: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(11),
+    color: GRAY9,
+  },
+  habitRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: RFValue(8),
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F97316',
+    borderRadius: RFValue(20),
+    paddingHorizontal: RFValue(8),
+    paddingVertical: RFValue(3),
+    gap: RFValue(3),
+  },
+  streakText: {
+    fontFamily: BOLD,
+    fontSize: RFValue(11),
+    color: WHITE,
+  },
+
+  // ─── Empty State ─────────────────────────────────────────────────────────
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: RFValue(40),
+  },
+  emptyText: {
+    fontFamily: BOLD,
+    fontSize: RFValue(16),
+    color: BLACK,
+    marginBottom: RFValue(8),
+  },
+  emptySubText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(13),
+    color: GRAY9,
+    textAlign: 'center',
+  },
+
+  // ─── Logout ──────────────────────────────────────────────────────────────
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: RFValue(10),
+    backgroundColor: '#FEF2F2',
+    borderRadius: RFValue(14),
+    paddingVertical: RFValue(16),
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginTop: RFValue(8),
+  },
+  logoutText: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(15),
+    color: '#EF4444',
+  },
 });

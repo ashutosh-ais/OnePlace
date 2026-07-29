@@ -9,14 +9,19 @@ import {
   View,
 } from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
 import FocusAwareStatusBar from '../../../components/FocusAwareStatusBar';
 import withLoader from '../../../hoc/withLoader';
 import styles from './OTP.styles';
+import { authAction } from '../../../redux/Slice/AuthSlice';
+import { getDBConnection, getUserByPhone, createUser, setUserActive } from '../../../database/DatabaseHelper';
+import { initializeDatabase } from '../../../redux/Slice/HabitSlice';
 
 const OTPWithoutHoc = ({ navigation, route, setLoading, insets }) => {
   const { phoneNumber } = route.params || { phoneNumber: '9999999999' };
   const [otp, setOtp] = useState(['', '', '', '']);
   const inputRefs = useRef([]);
+  const dispatch = useDispatch();
 
   const mainContainerStyles = {
     paddingTop: insets.top,
@@ -42,19 +47,49 @@ const OTPWithoutHoc = ({ navigation, route, setLoading, insets }) => {
     }
   };
 
-  const verifyOTP = () => {
+  const verifyOTP = async () => {
     const enteredOtp = otp.join('');
-    if (enteredOtp.length < 4) return;
+    if (enteredOtp.length < 4) {
+      return;
+    }
 
     Keyboard.dismiss();
     setLoading(true);
 
-    // Simulate Auth Token verification
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const db = await getDBConnection();
+
+      // Find existing user or create a new one
+      let user = await getUserByPhone(db, phoneNumber);
+      let userId;
+      if (user) {
+        userId = user.id;
+      } else {
+        userId = await createUser(db, phoneNumber);
+      }
+
+      // Persist session in SQLite so next app open auto-logs in
+      await setUserActive(db, userId);
+
+      // Store identity in Redux
+      dispatch(
+        authAction.setAuth({
+          isLoggedIn: true,
+          user_id: userId,
+          phone_number: phoneNumber,
+        }),
+      );
+
+      // Load this user's habits
+      await dispatch(initializeDatabase()).unwrap();
+
       // Replace the stack so user can't go back to OTP screen
       navigation.replace('MainTabs');
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

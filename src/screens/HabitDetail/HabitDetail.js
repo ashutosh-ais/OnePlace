@@ -20,6 +20,57 @@ import {
   MessageSquare,
   Calendar as CalendarIcon,
   X,
+  Pencil,
+  Activity,
+  Dumbbell,
+  BookOpen,
+  Coffee,
+  Moon,
+  Sun,
+  Heart,
+  Zap,
+  Music,
+  Camera,
+  Code2,
+  Briefcase,
+  Globe,
+  Leaf,
+  Star,
+  Trophy,
+  Flame,
+  Bike,
+  Brain,
+  Apple,
+  Droplets,
+  Bed,
+  Pill,
+  ShoppingCart,
+  Gamepad2,
+  Plane,
+  Home,
+  Flower2,
+  Fish,
+  ChefHat,
+  Timer,
+  Target,
+  Smile,
+  Handshake,
+  Languages,
+  Calculator,
+  Telescope,
+  Palette,
+  Headphones,
+  Tv,
+  Dog,
+  TreePine,
+  Mountain,
+  Wind,
+  Waves,
+  GraduationCap,
+  DollarSign,
+  Users,
+  Footprints,
+  Salad,
 } from 'lucide-react-native';
 import {
   PRIMARY_OS,
@@ -39,13 +90,27 @@ import ActionSheet from 'react-native-actions-sheet';
 
 const { width: WIDTH } = Dimensions.get('window');
 
-const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
+const ICON_MAP = {
+  Activity, Dumbbell, BookOpen, Coffee, Moon, Sun, Heart, Zap, Music,
+  Camera, Code2, Briefcase, Globe, Leaf, Star, Trophy, Flame, Bike,
+  Brain, Apple, Droplets, Bed, Pencil, Pill, ShoppingCart, Gamepad2,
+  Plane, Home, Flower2, Fish, ChefHat, Timer, Target, Smile, Handshake,
+  Languages, Calculator, Telescope, Palette, Headphones, Tv, Dog,
+  TreePine, Mountain, Wind, Waves, GraduationCap, DollarSign, Users,
+  Footprints, Salad,
+};
+
+const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
   const routeHabit = route.params?.habit || {};
   const dispatch = useDispatch();
   const { habits } = useSelector(state => state.habits);
   const habit = habits.find(h => h.id === routeHabit.id) || routeHabit;
   const actionSheetRef = useRef(null);
   const [isBackfilling, setIsBackfilling] = useState(false);
+
+  // Habit theming
+  const habitColor = habit?.color || PRIMARY_OS;
+  const HabitIcon = ICON_MAP[habit?.icon] || Activity;
 
   const mainContainerStyles = {
     flex: 1,
@@ -61,7 +126,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
     setOptimisticMarks({});
   }, [habit?.history]);
 
-  // Build marked dates for the calendar based on history
+  // Build marked dates — use habit color for completed entries
   const markedDates = React.useMemo(() => {
     const marks = {};
     if (habit?.history) {
@@ -70,7 +135,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           selected: true,
           selectedColor:
             entry.status === 'completed'
-              ? PRIMARY_OS
+              ? habitColor
               : entry.status === 'missed'
               ? '#EF4444'
               : '#3B82F6',
@@ -79,14 +144,14 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
     }
     Object.assign(marks, optimisticMarks);
     return marks;
-  }, [habit?.history, optimisticMarks]);
+  }, [habit?.history, optimisticMarks, habitColor]);
 
   const handleDayPress = React.useCallback(
     async dateObj => {
       const dateStr = dateObj.dateString;
       const currentlyCompleted =
         markedDates[dateStr]?.selected &&
-        markedDates[dateStr]?.selectedColor === PRIMARY_OS;
+        markedDates[dateStr]?.selectedColor === habitColor;
 
       setIsBackfilling(true);
       try {
@@ -101,7 +166,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
         } else {
           setOptimisticMarks(prev => ({
             ...prev,
-            [dateStr]: { selected: true, selectedColor: PRIMARY_OS },
+            [dateStr]: { selected: true, selectedColor: habitColor },
           }));
           await dispatch(
             logHabitCompletion({
@@ -119,7 +184,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
         setIsBackfilling(false);
       }
     },
-    [dispatch, habit?.id, habit?.targetQuantity, markedDates],
+    [dispatch, habit?.id, habit?.targetQuantity, markedDates, habitColor],
   );
 
   const CustomDay = React.useCallback(
@@ -184,12 +249,20 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           <ArrowLeft color={BLACK} size={RFValue(24)} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Habit Detail</Text>
-        <TouchableOpacity
-          onPress={() => actionSheetRef.current?.show()}
-          style={styles.backBtn}
-        >
-          <CalendarIcon color={BLACK} size={RFValue(20)} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('EditHabit', { habit })}
+            style={styles.backBtn}
+          >
+            <Pencil color={habitColor} size={RFValue(18)} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => actionSheetRef.current?.show()}
+            style={styles.backBtn}
+          >
+            <CalendarIcon color={BLACK} size={RFValue(20)} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -198,8 +271,11 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
       >
         {/* Habit Header Info */}
         <View style={styles.titleSection}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>
+          <View style={[styles.iconCircle, { backgroundColor: habitColor }]}>
+            <HabitIcon color={WHITE} size={RFValue(28)} />
+          </View>
+          <View style={[styles.categoryBadge, { backgroundColor: `${habitColor}18`, borderColor: `${habitColor}40` }]}>
+            <Text style={[styles.categoryText, { color: habitColor }]}>
               {habit.category_name || habit.category}
             </Text>
           </View>
@@ -240,7 +316,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                     {/* Timeline Line & Icon */}
                     <View style={styles.timelineIndicator}>
                       {entry.status === 'completed' && (
-                        <CheckCircle2 color={PRIMARY_OS} size={RFValue(24)} />
+                        <CheckCircle2 color={habitColor} size={RFValue(24)} />
                       )}
                       {entry.status === 'missed' && (
                         <XCircle color="#EF4444" size={RFValue(24)} />
@@ -253,7 +329,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                           style={[
                             styles.timelineLine,
                             entry.status === 'completed'
-                              ? { backgroundColor: PRIMARY_OS }
+                              ? { backgroundColor: habitColor }
                               : {},
                           ]}
                         />
@@ -359,6 +435,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: RFValue(4),
+  },
   headerTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: BLACK },
   content: {
     paddingHorizontal: '5%',
@@ -366,8 +447,21 @@ const styles = StyleSheet.create({
     paddingTop: RFValue(20),
   },
   titleSection: { alignItems: 'center', marginBottom: RFValue(30) },
+  iconCircle: {
+    width: RFValue(72),
+    height: RFValue(72),
+    borderRadius: RFValue(36),
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: RFValue(16),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
   categoryBadge: {
-    backgroundColor: '#EFF6FF',
+    borderWidth: 1,
     paddingHorizontal: RFValue(12),
     paddingVertical: RFValue(6),
     borderRadius: RFValue(20),
