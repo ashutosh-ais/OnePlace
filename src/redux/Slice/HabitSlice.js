@@ -170,18 +170,18 @@ const habitSlice = createSlice({
   extraReducers: builder => {
     builder
       .addCase(initializeDatabase.pending, state => {
-        state.loading = true;
+        // Only set full-screen loading on initial cold load when no habits exist
+        if (state.habits.length === 0) {
+          state.loading = true;
+        }
       })
       .addCase(initializeDatabase.fulfilled, (state, action) => {
         state.loading = false;
         state.categories = action.payload.categories;
         state.habits = action.payload.habits;
       })
-      .addCase(createRichHabit.pending, state => {
-        state.loading = true;
-      })
-      .addCase(logHabitCompletion.pending, state => {
-        state.loading = true;
+      .addCase(initializeDatabase.rejected, state => {
+        state.loading = false;
       });
   },
 });

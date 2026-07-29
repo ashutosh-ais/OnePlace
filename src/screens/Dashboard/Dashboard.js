@@ -1,25 +1,17 @@
 /* eslint-disable react-native/no-inline-styles */
 import {
-  Activity,
-  Award,
-  BookOpen,
   CalendarCheck,
   CheckCircle2,
   Circle,
-  Coffee,
-  Dumbbell,
   Flame,
   Frown,
-  Heart,
   LayoutGrid,
   List,
   Meh,
-  Moon,
   Smile,
   Target,
   User,
   X,
-  Zap,
 } from 'lucide-react-native';
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -47,6 +39,7 @@ import {
   setDashboardView,
   undoHabitCompletion,
 } from '../../redux/Slice/HabitSlice';
+import { getHabitIconAndColor } from '../../constants/icons';
 import { HEIGHT, WIDTH } from '../../constants/config';
 
 const isHabitScheduledForDate = (habit, dateStr) => {
@@ -515,89 +508,13 @@ const CircularProgressDate = ({
   );
 };
 
-const ICON_MAP = {
-  Activity,
-  Dumbbell,
-  BookOpen,
-  Coffee,
-  Moon,
-  Smile,
-  Target,
-  Award,
-  Heart,
-  Zap,
-};
 
-const PALETTE = [
-  '#3B82F6',
-  '#10B981',
-  '#F59E0B',
-  '#8B5CF6',
-  '#EC4899',
-  '#06B6D4',
-  '#F97316',
-  '#6366F1',
-];
-
-const getHabitIconAndColor = habit => {
-  const bgIndex = habit.id ? Math.abs(habit.id) % PALETTE.length : 0;
-  const habitColor = habit.color || PALETTE[bgIndex];
-
-  let HabitIcon = ICON_MAP[habit.icon];
-  if (!HabitIcon) {
-    const titleLower = (habit.title || '').toLowerCase();
-    const catLower = (
-      habit.category_name ||
-      habit.category ||
-      ''
-    ).toLowerCase();
-    if (
-      titleLower.includes('read') ||
-      titleLower.includes('book') ||
-      catLower.includes('read')
-    ) {
-      HabitIcon = BookOpen;
-    } else if (
-      titleLower.includes('water') ||
-      titleLower.includes('health') ||
-      titleLower.includes('drink')
-    ) {
-      HabitIcon = Heart;
-    } else if (
-      titleLower.includes('run') ||
-      titleLower.includes('walk') ||
-      titleLower.includes('gym') ||
-      titleLower.includes('workout') ||
-      titleLower.includes('fit')
-    ) {
-      HabitIcon = Dumbbell;
-    } else if (
-      titleLower.includes('meditat') ||
-      titleLower.includes('mind') ||
-      titleLower.includes('sleep')
-    ) {
-      HabitIcon = Smile;
-    } else if (titleLower.includes('coffee') || titleLower.includes('tea')) {
-      HabitIcon = Coffee;
-    } else if (
-      titleLower.includes('code') ||
-      titleLower.includes('work') ||
-      titleLower.includes('learn')
-    ) {
-      HabitIcon = Zap;
-    } else {
-      HabitIcon = Target;
-    }
-  }
-
-  return { habitColor, HabitIcon };
-};
 
 const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   const dispatch = useDispatch();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
-  const { habits, loading, dashboardView } = useSelector(state => state.habits);
+  const { habits, dashboardView } = useSelector(state => state.habits);
   const { phone, phone_number } = useSelector(state => state.auth);
   const userPhone = phone || phone_number;
 
@@ -665,9 +582,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
     }, [dispatch]),
   );
 
-  useEffect(() => {
-    setLoading(loading);
-  }, [loading, setLoading]);
+
 
   const mainContainerStylesWithInsets = {
     flex: 1,

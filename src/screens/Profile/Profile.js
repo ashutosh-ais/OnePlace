@@ -7,21 +7,13 @@ import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import withLoader from '../../hoc/withLoader';
 import getStyles from './Profile.styles';
 import {
-  Activity,
-  Award,
-  BookOpen,
   CheckCircle2,
   ChevronRight,
-  Coffee,
-  Dumbbell,
   Flame,
-  Heart,
   LogOut,
   Moon,
   Palette,
-  Smile,
   Target,
-  Zap,
 } from 'lucide-react-native';
 import { WHITE } from '../../constants/color';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -36,83 +28,7 @@ import {
 import { useTheme } from '../../theme/useTheme';
 import { THEME_PALETTE } from '../../theme/Theme';
 
-const ICON_MAP = {
-  Activity,
-  Dumbbell,
-  BookOpen,
-  Coffee,
-  Moon,
-  Smile,
-  Target,
-  Award,
-  Heart,
-  Zap,
-};
-
-const PALETTE = [
-  '#3B82F6',
-  '#10B981',
-  '#F59E0B',
-  '#8B5CF6',
-  '#EC4899',
-  '#06B6D4',
-  '#F97316',
-  '#6366F1',
-];
-
-const getHabitIconAndColor = habit => {
-  const bgIndex = habit.id ? Math.abs(habit.id) % PALETTE.length : 0;
-  const habitColor = habit.color || PALETTE[bgIndex];
-
-  let HabitIcon = ICON_MAP[habit.icon];
-  if (!HabitIcon) {
-    const titleLower = (habit.title || '').toLowerCase();
-    const catLower = (
-      habit.category_name ||
-      habit.category ||
-      ''
-    ).toLowerCase();
-    if (
-      titleLower.includes('read') ||
-      titleLower.includes('book') ||
-      catLower.includes('read')
-    ) {
-      HabitIcon = BookOpen;
-    } else if (
-      titleLower.includes('water') ||
-      titleLower.includes('health') ||
-      titleLower.includes('drink')
-    ) {
-      HabitIcon = Heart;
-    } else if (
-      titleLower.includes('run') ||
-      titleLower.includes('walk') ||
-      titleLower.includes('gym') ||
-      titleLower.includes('workout') ||
-      titleLower.includes('fit')
-    ) {
-      HabitIcon = Dumbbell;
-    } else if (
-      titleLower.includes('meditat') ||
-      titleLower.includes('mind') ||
-      titleLower.includes('sleep')
-    ) {
-      HabitIcon = Smile;
-    } else if (titleLower.includes('coffee') || titleLower.includes('tea')) {
-      HabitIcon = Coffee;
-    } else if (
-      titleLower.includes('code') ||
-      titleLower.includes('work') ||
-      titleLower.includes('learn')
-    ) {
-      HabitIcon = Zap;
-    } else {
-      HabitIcon = Target;
-    }
-  }
-
-  return { habitColor, HabitIcon };
-};
+import { getHabitIconAndColor } from '../../constants/icons';
 
 const ProfileWithoutHoc = ({ navigation, insets }) => {
   const dispatch = useDispatch();
