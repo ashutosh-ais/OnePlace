@@ -41,7 +41,7 @@ const CustomAddButton = ({ onPress }) => {
           useNativeDriver: true,
         }),
       ]).start();
-    }, 3000);
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [scaleAnim]);
