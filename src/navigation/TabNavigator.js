@@ -43,6 +43,7 @@ const TabNavigator = ({ navigation }) => {
         tabBarInactiveTintColor: GRAY9,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
+        animation: 'shift',
         tabBarIcon: ({ color, size }) => {
           size = RFValue(20);
           if (route.name === 'Home') return <Home color={color} size={size} />;

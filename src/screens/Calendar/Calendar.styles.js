@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { WIDTH, HEIGHT } from '../../constants/config';
 import { BOLD, SEMIBOLD, REGULAR, INTER } from '../../constants/fontfamily';
+import { GRAY9 } from '../../constants/color';
 
 const getStyles = (colors) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
@@ -33,6 +34,8 @@ const getStyles = (colors) => StyleSheet.create({
     borderRadius: 16,
     padding: 15,
     marginBottom: HEIGHT * 0.03,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   monthSelector: {
     flexDirection: 'row',
@@ -86,27 +89,6 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.text,
     marginBottom: 15,
   },
-  habitRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-    borderWidth: 0.3,
-    borderColor: colors.primary,
-  },
-  habitInfo: { flex: 1 },
-  habitTitle: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: colors.text },
-  habitMeta: {
-    fontFamily: INTER,
-    fontSize: RFValue(11),
-    color: colors.textSecondary,
-    marginTop: 4,
-  },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  statusBadgeText: { fontFamily: SEMIBOLD, fontSize: RFValue(10) },
 
   // Custom Day Component Styles
   customDay: {
@@ -118,11 +100,6 @@ const getStyles = (colors) => StyleSheet.create({
   },
   customDaySelected: {
     backgroundColor: colors.primary,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
   },
   customDayToday: {
     backgroundColor: `${colors.primary}15`,
@@ -136,6 +113,9 @@ const getStyles = (colors) => StyleSheet.create({
   },
   customDayTextSelected: {
     color: colors.surface,
+  },
+  customDayTextToday: {
+    color: colors.primary,
   },
   customDayTextDisabled: {
     color: colors.border,
@@ -181,62 +161,74 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.surface,
   },
 
-  // Habit Card
-  cardContainer: {
+  // Agenda View Habit Card Styles (No shadows or elevation)
+  habitCard: {
+    backgroundColor: colors.surface,
+    borderRadius: WIDTH * 0.025,
+    padding: WIDTH * 0.04,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'space-between',
+    marginBottom: HEIGHT * 0.01,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  cardIconWrapper: {
-    width: RFValue(48),
-    height: RFValue(48),
-    borderRadius: RFValue(24),
-    justifyContent: 'center',
+  habitMain: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16,
-  },
-  cardIconText: {
-    fontSize: RFValue(24),
-  },
-  cardMiddle: {
     flex: 1,
   },
-  cardTitle: {
-    fontFamily: BOLD,
-    fontSize: RFValue(16),
+  iconContainer: {
+    width: WIDTH * 0.11,
+    height: WIDTH * 0.11,
+    borderRadius: WIDTH * 0.1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  habitDetails: {
+    marginLeft: RFValue(12),
+    flex: 1,
+  },
+  habitTitle: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(12),
     color: colors.text,
-    marginBottom: 4,
+    marginBottom: HEIGHT * 0.002,
   },
-  cardSubtitle: {
+  habitTitleCompleted: {
+    textDecorationLine: 'line-through',
+    color: GRAY9,
+  },
+  habitMeta: {
     fontFamily: REGULAR,
-    fontSize: RFValue(13),
-    color: '#9CA3AF',
+    fontSize: RFValue(11),
+    color: GRAY9,
   },
-  cardRight: {
+  habitRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  actionBtn: {
-    width: RFValue(36),
-    height: RFValue(36),
-    borderRadius: RFValue(18),
-    justifyContent: 'center',
+  streakBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
+    backgroundColor: '#EF444415',
+    paddingHorizontal: RFValue(8),
+    paddingVertical: RFValue(3),
+    borderRadius: RFValue(8),
+    marginRight: RFValue(12),
   },
-  btnDoc: {
-    backgroundColor: '#FEF2F2',
+  streakText: {
+    fontFamily: BOLD,
+    fontSize: RFValue(11),
+    color: '#EF4444',
+    marginLeft: 4,
   },
-  btnCheck: {
-    backgroundColor: '#FDE047', // using yellow instead of green to match brand, or light red as in prompt it said marks habit complete
+
+  emptyText: {
+    fontFamily: REGULAR,
+    color: GRAY9,
+    fontSize: RFValue(12),
+    marginTop: RFValue(10),
   },
 });
 

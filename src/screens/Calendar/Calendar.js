@@ -1,20 +1,17 @@
-import { useTheme } from '../../theme/useTheme';
 import React, { useState, useMemo } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
+import { useTheme } from '../../theme/useTheme';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
-import { GRAY9 } from '../../constants/color';
-import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
+import { WIDTH } from '../../constants/config';
 import {
   Activity,
   Award,
   BookOpen,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Circle,
   Coffee,
   Dumbbell,
@@ -60,18 +57,44 @@ const getHabitIconAndColor = (habit) => {
   let HabitIcon = ICON_MAP[habit.icon];
   if (!HabitIcon) {
     const titleLower = (habit.title || '').toLowerCase();
-    const catLower = (habit.category_name || habit.category || '').toLowerCase();
-    if (titleLower.includes('read') || titleLower.includes('book') || catLower.includes('read')) {
+    const catLower = (
+      habit.category_name ||
+      habit.category ||
+      ''
+    ).toLowerCase();
+    if (
+      titleLower.includes('read') ||
+      titleLower.includes('book') ||
+      catLower.includes('read')
+    ) {
       HabitIcon = BookOpen;
-    } else if (titleLower.includes('water') || titleLower.includes('health') || titleLower.includes('drink')) {
+    } else if (
+      titleLower.includes('water') ||
+      titleLower.includes('health') ||
+      titleLower.includes('drink')
+    ) {
       HabitIcon = Heart;
-    } else if (titleLower.includes('run') || titleLower.includes('walk') || titleLower.includes('gym') || titleLower.includes('workout') || titleLower.includes('fit')) {
+    } else if (
+      titleLower.includes('run') ||
+      titleLower.includes('walk') ||
+      titleLower.includes('gym') ||
+      titleLower.includes('workout') ||
+      titleLower.includes('fit')
+    ) {
       HabitIcon = Dumbbell;
-    } else if (titleLower.includes('meditat') || titleLower.includes('mind') || titleLower.includes('sleep')) {
+    } else if (
+      titleLower.includes('meditat') ||
+      titleLower.includes('mind') ||
+      titleLower.includes('sleep')
+    ) {
       HabitIcon = Smile;
     } else if (titleLower.includes('coffee') || titleLower.includes('tea')) {
       HabitIcon = Coffee;
-    } else if (titleLower.includes('code') || titleLower.includes('work') || titleLower.includes('learn')) {
+    } else if (
+      titleLower.includes('code') ||
+      titleLower.includes('work') ||
+      titleLower.includes('learn')
+    ) {
       HabitIcon = Zap;
     } else {
       HabitIcon = Target;
@@ -85,7 +108,9 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => getStyles(colors), [colors]);
   const [selectedDate, setSelectedDate] = useState(
-    new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
+    new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+      .toISOString()
+      .split('T')[0],
   );
   const [filter, setFilter] = useState('All'); // 'All' | 'Due'
   const { habits } = useSelector(state => state.habits);
@@ -120,7 +145,10 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
       selectedColor: colors.primary,
     };
   } else {
-    markedDates[selectedDate] = { selected: true, selectedColor: colors.primary };
+    markedDates[selectedDate] = {
+      selected: true,
+      selectedColor: colors.primary,
+    };
   }
 
   const isHabitScheduledForDate = (habit, dateStr) => {
@@ -168,14 +196,21 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
 
   return (
     <View style={[styles.container, mainContainerStyles]}>
-      <FocusAwareStatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
+      <FocusAwareStatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Timeline</Text>
         <TouchableOpacity
           style={styles.todayBtn}
           onPress={() =>
-            setSelectedDate(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])
+            setSelectedDate(
+              new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
+                .toISOString()
+                .split('T')[0],
+            )
           }
         >
           <Text style={styles.todayBtnText}>Today</Text>
@@ -186,7 +221,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
-        <View style={[styles.calendarCard]}>
+        <View style={styles.calendarCard}>
           <Calendar
             current={selectedDate}
             markedDates={markedDates}
@@ -212,7 +247,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
                     style={[
                       styles.customDayText,
                       isSelected && styles.customDayTextSelected,
-                      isToday && !isSelected && { color: colors.primary },
+                      isToday && !isSelected && styles.customDayTextToday,
                       isDisabled && styles.customDayTextDisabled,
                     ]}
                   >
@@ -242,9 +277,6 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
               selectedDotColor: colors.surface,
               arrowColor: colors.primary,
               monthTextColor: colors.text,
-              textDayFontFamily: REGULAR,
-              textMonthFontFamily: BOLD,
-              textDayHeaderFontFamily: SEMIBOLD,
             }}
           />
         </View>
@@ -284,14 +316,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
           </View>
 
           {displayList.length === 0 ? (
-            <Text
-              style={{
-                fontFamily: REGULAR,
-                color: GRAY9,
-                fontSize: RFValue(12),
-                marginTop: RFValue(10),
-              }}
-            >
+            <Text style={styles.emptyText}>
               No habits {filter === 'Due' ? 'due' : 'scheduled'} for this date.
             </Text>
           ) : (
@@ -303,76 +328,74 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
                   key={habit.id}
                   activeOpacity={0.8}
                   onPress={() => navigation.navigate('HabitDetail', { habit })}
-                  style={styles.cardContainer}
+                  style={styles.habitCard}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <View style={styles.habitMain}>
                     <View
-                      style={{
-                        width: RFValue(40),
-                        height: RFValue(40),
-                        borderRadius: RFValue(12),
-                        backgroundColor: `${habitColor}20`,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: RFValue(12),
-                      }}
+                      style={[
+                        styles.iconContainer,
+                        { backgroundColor: `${habitColor}20` },
+                      ]}
                     >
-                      <HabitIcon color={habitColor} size={RFValue(20)} />
+                      <HabitIcon color={habitColor} size={WIDTH * 0.06} />
                     </View>
 
-                    <View style={styles.cardMiddle}>
-                      <Text style={styles.cardTitle} numberOfLines={1}>{habit.title}</Text>
-                      <Text style={styles.cardSubtitle} numberOfLines={1}>
-                        Streak: {habit.streak || 0} days
+                    <View style={styles.habitDetails}>
+                      <Text
+                        style={[
+                          styles.habitTitle,
+                          habit.isCompleted && styles.habitTitleCompleted,
+                        ]}
+                        numberOfLines={2}
+                      >
+                        {habit.title}
                       </Text>
-                    </View>
-
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        backgroundColor: '#EF444415',
-                        paddingHorizontal: RFValue(8),
-                        paddingVertical: RFValue(3),
-                        borderRadius: RFValue(8),
-                        marginRight: RFValue(12),
-                      }}
-                    >
-                      <Flame color="#EF4444" size={RFValue(12)} />
-                      <Text style={{ fontFamily: BOLD, fontSize: RFValue(11), color: '#EF4444', marginLeft: 4 }}>
-                        {habit.streak || 0}
+                      <Text style={styles.habitMeta} numberOfLines={1}>
+                        {habit.category_name || habit.category || 'Habit'}{' '}
+                        {habit.targetQuantity || habit.target_quantity
+                          ? `• ${habit.targetQuantity || habit.target_quantity} ${habit.unit || ''}`
+                          : ''}
                       </Text>
                     </View>
                   </View>
 
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (!habit.isCompleted) {
-                        dispatch(
-                          logHabitCompletion({
-                            id: habit.id,
-                            metric: habit.targetQuantity || 1,
-                            mood: 'Good',
-                            notes: '',
-                            dateStr: selectedDate,
-                          }),
-                        );
-                      } else {
-                        dispatch(
-                          undoHabitCompletion({
-                            habitId: habit.id,
-                            dateStr: selectedDate,
-                          }),
-                        );
-                      }
-                    }}
-                  >
-                    {habit.isCompleted ? (
-                      <CheckCircle2 color={habitColor} size={RFValue(24)} />
-                    ) : (
-                      <Circle color={`${habitColor}60`} size={RFValue(24)} />
-                    )}
-                  </TouchableOpacity>
+                  <View style={styles.habitRight}>
+                    <View style={styles.streakBadge}>
+                      <Flame color="#EF4444" size={RFValue(12)} />
+                      <Text style={styles.streakText}>
+                        {habit.streak || 0}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (!habit.isCompleted) {
+                          dispatch(
+                            logHabitCompletion({
+                              id: habit.id,
+                              metric: habit.targetQuantity || habit.target_quantity || 1,
+                              mood: 'Good',
+                              notes: '',
+                              dateStr: selectedDate,
+                            }),
+                          );
+                        } else {
+                          dispatch(
+                            undoHabitCompletion({
+                              habitId: habit.id,
+                              dateStr: selectedDate,
+                            }),
+                          );
+                        }
+                      }}
+                    >
+                      {habit.isCompleted ? (
+                        <CheckCircle2 color={habitColor} size={RFValue(24)} />
+                      ) : (
+                        <Circle color={`${habitColor}60`} size={RFValue(24)} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
                 </TouchableOpacity>
               );
             })
