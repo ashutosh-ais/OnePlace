@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import { useTheme } from '../../theme/useTheme';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import ActionSheet from 'react-native-actions-sheet';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,14 +8,14 @@ import { createRichHabit, createNewCategory } from '../../redux/Slice/HabitSlice
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import withLoader from '../../hoc/withLoader';
 import { X, Check, Plus } from 'lucide-react-native';
-import { PRIMARY_OS, WHITE, GRAY9, INPUT_BORDER, BLACK } from '../../constants/color';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
-
 const SCHEDULE_TYPES = ['Every Day', 'Specific Days', 'X Times / Period', 'Custom'];
 const WEEK_DAYS = [{ id: 'Mon', label: 'M' }, { id: 'Tue', label: 'T' }, { id: 'Wed', label: 'W' }, { id: 'Thu', label: 'T' }, { id: 'Fri', label: 'F' }, { id: 'Sat', label: 'S' }, { id: 'Sun', label: 'S' }];
 
 const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const dispatch = useDispatch();
   const { categories } = useSelector(state => state.habits);
 
@@ -94,7 +95,7 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
       style={[styles.container, mainContainerStyles]} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="#FFFFFF" />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -102,7 +103,7 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>New Habit</Text>
         <TouchableOpacity onPress={handleCreate} style={styles.backBtn}>
-          <Check color={PRIMARY_OS} size={RFValue(24)} />
+          <Check color={colors.primary} size={RFValue(24)} />
         </TouchableOpacity>
       </View>
 
@@ -244,7 +245,7 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
                 const newChecklists = checklists.filter((_, i) => i !== index);
                 setChecklists(newChecklists);
               }}>
-                <X color={GRAY9} size={RFValue(18)} />
+                <X color={colors.textSecondary} size={RFValue(18)} />
               </TouchableOpacity>
             </View>
           ))}
@@ -252,7 +253,7 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
             style={styles.addBtn}
             onPress={() => setChecklists([...checklists, { title: '', isCompleted: false }])}
           >
-            <Plus color={PRIMARY_OS} size={RFValue(16)} />
+            <Plus color={colors.primary} size={RFValue(16)} />
             <Text style={styles.addBtnText}>Add Step</Text>
           </TouchableOpacity>
         </View>
@@ -285,48 +286,48 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: WHITE },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: '5%', paddingVertical: RFValue(15), borderBottomWidth: 1, borderColor: INPUT_BORDER },
+const getStyles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.surface },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: '5%', paddingVertical: RFValue(15), borderBottomWidth: 1, borderColor: colors.border },
   backBtn: { padding: RFValue(5), width: RFValue(40), alignItems: 'center' },
-  headerTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: BLACK },
+  headerTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: colors.text },
   content: { paddingHorizontal: '5%', paddingBottom: RFValue(120), paddingTop: RFValue(20) },
   section: { marginBottom: RFValue(24) },
   labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: RFValue(10) },
-  label: { fontFamily: BOLD, fontSize: RFValue(14), color: BLACK, marginBottom: RFValue(10) },
-  subLabel: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: GRAY9, marginBottom: RFValue(6) },
-  addText: { fontFamily: BOLD, fontSize: RFValue(12), color: PRIMARY_OS },
-  input: { borderWidth: 1, borderColor: INPUT_BORDER, borderRadius: RFValue(12), padding: RFValue(15), fontFamily: REGULAR, fontSize: RFValue(14), color: BLACK, backgroundColor: '#F9FAFB' },
+  label: { fontFamily: BOLD, fontSize: RFValue(14), color: colors.text, marginBottom: RFValue(10) },
+  subLabel: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: colors.textSecondary, marginBottom: RFValue(6) },
+  addText: { fontFamily: BOLD, fontSize: RFValue(12), color: colors.primary },
+  input: { borderWidth: 1, borderColor: colors.border, borderRadius: RFValue(12), padding: RFValue(15), fontFamily: REGULAR, fontSize: RFValue(14), color: colors.text, backgroundColor: colors.background },
   row: { flexDirection: 'row', alignItems: 'center' },
   categoryCreatorRow: { flexDirection: 'row', alignItems: 'center' },
-  catSaveBtn: { backgroundColor: PRIMARY_OS, padding: RFValue(12), borderRadius: RFValue(10), marginLeft: RFValue(8) },
-  catCancelBtn: { backgroundColor: '#F3F4F6', padding: RFValue(12), borderRadius: RFValue(10), marginLeft: RFValue(8), borderWidth: 1, borderColor: INPUT_BORDER },
+  catSaveBtn: { backgroundColor: colors.primary, padding: RFValue(12), borderRadius: RFValue(10), marginLeft: RFValue(8) },
+  catCancelBtn: { backgroundColor: colors.border, padding: RFValue(12), borderRadius: RFValue(10), marginLeft: RFValue(8), borderWidth: 1, borderColor: colors.border },
   catScroll: { flexDirection: 'row' },
-  chip: { borderWidth: 1, borderColor: INPUT_BORDER, borderRadius: RFValue(20), paddingHorizontal: RFValue(16), paddingVertical: RFValue(8), marginRight: RFValue(10) },
-  chipActive: { backgroundColor: PRIMARY_OS, borderColor: PRIMARY_OS },
-  chipText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: BLACK },
-  chipTextActive: { color: WHITE },
+  chip: { borderWidth: 1, borderColor: colors.border, borderRadius: RFValue(20), paddingHorizontal: RFValue(16), paddingVertical: RFValue(8), marginRight: RFValue(10) },
+  chipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  chipText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: colors.text },
+  chipTextActive: { color: colors.surface },
   scheduleGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  scheduleBtn: { width: '48%', paddingVertical: RFValue(12), borderWidth: 1, borderColor: INPUT_BORDER, borderRadius: RFValue(10), alignItems: 'center', marginBottom: RFValue(10) },
-  scheduleBtnActive: { backgroundColor: '#EFF6FF', borderColor: PRIMARY_OS },
-  scheduleBtnText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: BLACK },
-  scheduleBtnTextActive: { color: PRIMARY_OS, fontFamily: BOLD },
+  scheduleBtn: { width: '48%', paddingVertical: RFValue(12), borderWidth: 1, borderColor: colors.border, borderRadius: RFValue(10), alignItems: 'center', marginBottom: RFValue(10) },
+  scheduleBtnActive: { backgroundColor: `${colors.primary}15`, borderColor: colors.primary },
+  scheduleBtnText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: colors.text },
+  scheduleBtnTextActive: { color: colors.primary, fontFamily: BOLD },
   daysRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: RFValue(10), paddingHorizontal: RFValue(5) },
-  dayCircle: { width: RFValue(36), height: RFValue(36), borderRadius: RFValue(18), borderWidth: 1, borderColor: INPUT_BORDER, backgroundColor: '#F9FAFB', justifyContent: 'center', alignItems: 'center' },
-  dayCircleActive: { backgroundColor: PRIMARY_OS, borderColor: PRIMARY_OS },
-  dayText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: GRAY9 },
-  dayTextActive: { color: WHITE },
-  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#EFF6FF', alignSelf: 'flex-start', paddingHorizontal: RFValue(12), paddingVertical: RFValue(8), borderRadius: RFValue(20), marginTop: RFValue(5) },
-  addBtnText: { color: PRIMARY_OS, fontFamily: BOLD, fontSize: RFValue(12), marginLeft: RFValue(4) },
-  bottomBar: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: WHITE, borderTopWidth: 1, borderColor: INPUT_BORDER, paddingHorizontal: '5%', paddingTop: RFValue(15) },
-  saveBtn: { backgroundColor: PRIMARY_OS, borderRadius: RFValue(12), paddingVertical: RFValue(15), alignItems: 'center' },
-  saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: WHITE },
+  dayCircle: { width: RFValue(36), height: RFValue(36), borderRadius: RFValue(18), borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' },
+  dayCircleActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  dayText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: colors.textSecondary },
+  dayTextActive: { color: colors.surface },
+  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.primary}15`, alignSelf: 'flex-start', paddingHorizontal: RFValue(12), paddingVertical: RFValue(8), borderRadius: RFValue(20), marginTop: RFValue(5) },
+  addBtnText: { color: colors.primary, fontFamily: BOLD, fontSize: RFValue(12), marginLeft: RFValue(4) },
+  bottomBar: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: colors.surface, borderTopWidth: 1, borderColor: colors.border, paddingHorizontal: '5%', paddingTop: RFValue(15) },
+  saveBtn: { backgroundColor: colors.primary, borderRadius: RFValue(12), paddingVertical: RFValue(15), alignItems: 'center' },
+  saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: colors.surface },
   actionSheetContainer: { borderTopLeftRadius: RFValue(24), borderTopRightRadius: RFValue(24), paddingBottom: RFValue(30) },
   actionSheetContent: { padding: RFValue(20) },
-  actionSheetTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: BLACK, marginBottom: RFValue(15) },
-  actionSheetInput: { borderWidth: 1, borderColor: INPUT_BORDER, borderRadius: RFValue(12), padding: RFValue(15), fontFamily: REGULAR, fontSize: RFValue(14), color: BLACK, backgroundColor: '#F9FAFB', marginBottom: RFValue(15) },
-  actionSheetSaveBtn: { backgroundColor: PRIMARY_OS, borderRadius: RFValue(12), paddingVertical: RFValue(15), alignItems: 'center' },
-  actionSheetSaveText: { fontFamily: BOLD, fontSize: RFValue(14), color: WHITE },
+  actionSheetTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: colors.text, marginBottom: RFValue(15) },
+  actionSheetInput: { borderWidth: 1, borderColor: colors.border, borderRadius: RFValue(12), padding: RFValue(15), fontFamily: REGULAR, fontSize: RFValue(14), color: colors.text, backgroundColor: colors.background, marginBottom: RFValue(15) },
+  actionSheetSaveBtn: { backgroundColor: colors.primary, borderRadius: RFValue(12), paddingVertical: RFValue(15), alignItems: 'center' },
+  actionSheetSaveText: { fontFamily: BOLD, fontSize: RFValue(14), color: colors.surface },
 });
 
 export default withLoader(withSafeAreaInsets(CreateHabitWithoutHoc));

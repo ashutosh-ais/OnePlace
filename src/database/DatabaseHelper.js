@@ -19,6 +19,8 @@ export const createTables = async db => {
       name TEXT,
       focus_goal TEXT,
       is_active INTEGER DEFAULT 0,
+      theme_color TEXT,
+      color_mode TEXT DEFAULT 'system',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `;
@@ -86,6 +88,8 @@ export const createTables = async db => {
     await runMigration(`ALTER TABLE Categories ADD COLUMN user_id INTEGER`);
     await runMigration(`ALTER TABLE Habits ADD COLUMN color TEXT DEFAULT '#3B82F6'`);
     await runMigration(`ALTER TABLE Habits ADD COLUMN icon TEXT DEFAULT 'Activity'`);
+    await runMigration(`ALTER TABLE Users ADD COLUMN theme_color TEXT`);
+    await runMigration(`ALTER TABLE Users ADD COLUMN color_mode TEXT DEFAULT 'system'`);
 
     console.log('OnePlace: DB ready');
   } catch (error) {

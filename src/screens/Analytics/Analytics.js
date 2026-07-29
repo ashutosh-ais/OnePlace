@@ -1,4 +1,5 @@
-import React from 'react';
+import { useTheme } from '../../theme/useTheme';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,16 +7,17 @@ import { useSelector } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import Heatmap from '../../components/Heatmap';
 import MonthCalendar from '../../components/MonthCalendar';
-import { BLACK, GRAY9, INPUT_BORDER, WHITE } from '../../constants/color';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
 import withLoader from '../../hoc/withLoader';
 
 const AnalyticsWithoutHoc = ({ insets }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const { freezeTokens, habits } = useSelector(state => state.habits);
 
   const mainContainerStyles = {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
     paddingTop: insets.top,
     paddingLeft: insets.left,
     paddingRight: insets.right,
@@ -23,7 +25,7 @@ const AnalyticsWithoutHoc = ({ insets }) => {
 
   return (
     <View style={mainContainerStyles}>
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Insights & Analytics</Text>
@@ -76,16 +78,16 @@ const AnalyticsWithoutHoc = ({ insets }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   header: {
     paddingHorizontal: RFValue(20),
     paddingVertical: RFValue(15),
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
   headerTitle: {
     fontFamily: BOLD,
     fontSize: RFValue(22),
-    color: BLACK,
+    color: colors.text,
   },
   content: {
     paddingHorizontal: RFValue(20),
@@ -97,7 +99,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontFamily: BOLD,
     fontSize: RFValue(16),
-    color: BLACK,
+    color: colors.text,
     marginBottom: RFValue(12),
   },
   statsGrid: {
@@ -107,30 +109,30 @@ const styles = StyleSheet.create({
   },
   statBox: {
     width: '48%',
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     borderRadius: RFValue(12),
     padding: RFValue(16),
     marginBottom: RFValue(12),
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
   statBoxTitle: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(11),
-    color: GRAY9,
+    color: colors.textSecondary,
     marginBottom: RFValue(6),
   },
   statBoxValue: {
     fontFamily: BOLD,
     fontSize: RFValue(22),
-    color: BLACK,
+    color: colors.text,
   },
   statUnit: {
     fontFamily: REGULAR,
     fontSize: RFValue(12),
-    color: GRAY9,
+    color: colors.textSecondary,
   },
 });
 

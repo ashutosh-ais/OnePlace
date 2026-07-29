@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+import { useTheme } from '../../theme/useTheme';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
+
 import {
   Alert,
   FlatList,
@@ -75,13 +77,6 @@ import withLoader from '../../hoc/withLoader';
 import { editHabit, createNewCategory } from '../../redux/Slice/HabitSlice';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
-import {
-  BLACK,
-  GRAY9,
-  INPUT_BORDER,
-  PRIMARY_OS,
-  WHITE,
-} from '../../constants/color';
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
@@ -177,6 +172,8 @@ const ICONS = [
 // ─── Component ─────────────────────────────────────────────────────────────
 
 const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const dispatch = useDispatch();
   const { categories } = useSelector(state => state.habits);
   const { habit } = route.params;
@@ -210,7 +207,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
   const [reminderTime, setReminderTime] = useState(habit.reminder_time || '');
   const [checklists, setChecklists] = useState(habit.checklists || []);
   const [selectedColor, setSelectedColor] = useState(
-    habit.color || PRIMARY_OS,
+    habit.color || colors.primary,
   );
   const [selectedIcon, setSelectedIcon] = useState(
     habit.icon || 'Activity',
@@ -300,7 +297,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
       style={[styles.container, mainContainerStyles]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="#FFFFFF" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -312,7 +309,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={[styles.headerIcon, { backgroundColor: selectedColor }]}>
-            <SelectedIconComponent color={WHITE} size={RFValue(16)} />
+            <SelectedIconComponent color={colors.surface} size={RFValue(16)} />
           </View>
           <Text style={styles.headerTitle}>Edit Habit</Text>
         </View>
@@ -361,7 +358,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                   ]}
                 >
                   <item.Icon
-                    color={isSelected ? WHITE : GRAY9}
+                    color={isSelected ? colors.surface : colors.textSecondary}
                     size={RFValue(20)}
                   />
                 </TouchableOpacity>
@@ -385,7 +382,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                 ]}
               >
                 {selectedColor === color && (
-                  <Check color={WHITE} size={RFValue(14)} strokeWidth={3} />
+                  <Check color={colors.surface} size={RFValue(14)} strokeWidth={3} />
                 )}
               </TouchableOpacity>
             ))}
@@ -561,7 +558,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                   setChecklists(checklists.filter((_, i) => i !== index))
                 }
               >
-                <X color={GRAY9} size={RFValue(18)} />
+                <X color={colors.textSecondary} size={RFValue(18)} />
               </TouchableOpacity>
             </View>
           ))}
@@ -625,8 +622,8 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: WHITE },
+const getStyles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.surface },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -634,7 +631,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: '5%',
     paddingVertical: RFValue(14),
     borderBottomWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
   },
   headerBtn: {
     width: RFValue(36),
@@ -654,7 +651,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: BLACK },
+  headerTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: colors.text },
   content: {
     paddingHorizontal: '5%',
     paddingBottom: RFValue(120),
@@ -670,25 +667,25 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: BOLD,
     fontSize: RFValue(14),
-    color: BLACK,
+    color: colors.text,
     marginBottom: RFValue(10),
   },
   subLabel: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(12),
-    color: GRAY9,
+    color: colors.textSecondary,
     marginBottom: RFValue(6),
   },
   addText: { fontFamily: BOLD, fontSize: RFValue(12) },
   input: {
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     borderRadius: RFValue(12),
     padding: RFValue(14),
     fontFamily: REGULAR,
     fontSize: RFValue(14),
-    color: BLACK,
-    backgroundColor: '#F9FAFB',
+    color: colors.text,
+    backgroundColor: colors.background,
   },
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: RFValue(10) },
   halfInput: { flex: 1 },
@@ -701,10 +698,10 @@ const styles = StyleSheet.create({
     height: RFValue(48),
     borderRadius: RFValue(12),
     borderWidth: 1.5,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
 
   // Color palette
@@ -732,14 +729,14 @@ const styles = StyleSheet.create({
   // Category chips
   chip: {
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     borderRadius: RFValue(20),
     paddingHorizontal: RFValue(16),
     paddingVertical: RFValue(8),
     marginRight: RFValue(10),
   },
-  chipText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: BLACK },
-  chipTextActive: { color: WHITE },
+  chipText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: colors.text },
+  chipTextActive: { color: colors.surface },
 
   // Schedule
   scheduleGrid: {
@@ -751,7 +748,7 @@ const styles = StyleSheet.create({
     width: '48%',
     paddingVertical: RFValue(12),
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     borderRadius: RFValue(10),
     alignItems: 'center',
     marginBottom: RFValue(10),
@@ -759,7 +756,7 @@ const styles = StyleSheet.create({
   scheduleBtnText: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(12),
-    color: BLACK,
+    color: colors.text,
   },
   daysRow: {
     flexDirection: 'row',
@@ -772,13 +769,13 @@ const styles = StyleSheet.create({
     height: RFValue(36),
     borderRadius: RFValue(18),
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
-    backgroundColor: '#F9FAFB',
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dayText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: GRAY9 },
-  dayTextActive: { color: WHITE },
+  dayText: { fontFamily: SEMIBOLD, fontSize: RFValue(12), color: colors.textSecondary },
+  dayTextActive: { color: colors.surface },
 
   // Checklist
   checklistRow: {
@@ -812,9 +809,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     paddingHorizontal: '5%',
     paddingTop: RFValue(15),
   },
@@ -823,7 +820,7 @@ const styles = StyleSheet.create({
     paddingVertical: RFValue(15),
     alignItems: 'center',
   },
-  saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: WHITE },
+  saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: colors.surface },
 
   // ActionSheet
   actionSheetContainer: {
@@ -835,18 +832,18 @@ const styles = StyleSheet.create({
   actionSheetTitle: {
     fontFamily: BOLD,
     fontSize: RFValue(16),
-    color: BLACK,
+    color: colors.text,
     marginBottom: RFValue(15),
   },
   actionSheetInput: {
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     borderRadius: RFValue(12),
     padding: RFValue(15),
     fontFamily: REGULAR,
     fontSize: RFValue(14),
-    color: BLACK,
-    backgroundColor: '#F9FAFB',
+    color: colors.text,
+    backgroundColor: colors.background,
     marginBottom: RFValue(15),
   },
   actionSheetSaveBtn: {
@@ -857,7 +854,7 @@ const styles = StyleSheet.create({
   actionSheetSaveText: {
     fontFamily: BOLD,
     fontSize: RFValue(14),
-    color: WHITE,
+    color: colors.surface,
   },
 });
 

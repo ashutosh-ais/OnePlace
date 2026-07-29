@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   ScrollView,
   Text,
@@ -11,23 +11,32 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import withLoader from '../../hoc/withLoader';
-import styles from './Profile.styles';
+import getStyles from './Profile.styles';
 import {
   CheckCircle2,
   Flame,
   Target,
   LogOut,
   ChevronRight,
+  Palette,
+  Moon,
 } from 'lucide-react-native';
-import { GRAY9, PRIMARY_OS, WHITE } from '../../constants/color';
+import { GRAY9, WHITE } from '../../constants/color';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { authAction } from '../../redux/Slice/AuthSlice';
+import { themeAction } from '../../redux/Slice/ThemeSlice';
 import { getDBConnection, getUserStats, setUserActive } from '../../database/DatabaseHelper';
+import { useTheme } from '../../theme/useTheme';
+import { THEME_PALETTE } from '../../theme/Theme';
 
 const ProfileWithoutHoc = ({ navigation, insets }) => {
   const dispatch = useDispatch();
   const { habits } = useSelector(state => state.habits);
   const { phone_number, user_id } = useSelector(state => state.auth);
+  const { themeColor, colorMode } = useSelector(state => state.theme);
+  const { colors, isDark } = useTheme();
+  
+  const styles = useMemo(() => getStyles(colors), [colors]);
 
   const [stats, setStats] = useState({
     totalHabits: 0,
@@ -41,18 +50,14 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
     paddingRight: insets.right,
   };
 
-  // Compute avatar initials from last 4 digits of phone
   const avatarLabel = phone_number
     ? phone_number.slice(-4)
     : '----';
 
-  // Load real stats from SQLite
   useFocusEffect(
     useCallback(() => {
       const loadStats = async () => {
-        if (!user_id) {
-          return;
-        }
+        if (!user_id) return;
         try {
           const db = await getDBConnection();
           const s = await getUserStats(db, user_id);
@@ -76,7 +81,6 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
           style: 'destructive',
           onPress: async () => {
             try {
-              // Clear persisted session from SQLite
               const db = await getDBConnection();
               await setUserActive(db, null);
             } catch (err) {
@@ -91,27 +95,42 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
     );
   };
 
+  const updateThemeInDB = async (field, value) => {
+    try {
+      const db = await getDBConnection();
+      await db.executeSql(`UPDATE Users SET ${field} = ? WHERE id = ?`, [value, user_id]);
+    } catch(e) {
+      console.log('Error updating theme in DB', e);
+    }
+  };
+
+  const handleColorSelect = (color) => {
+    dispatch(themeAction.setThemeColor(color));
+    updateThemeInDB('theme_color', color);
+  };
+
+  const handleModeSelect = (mode) => {
+    dispatch(themeAction.setColorMode(mode));
+    updateThemeInDB('color_mode', mode);
+  };
+
   return (
     <View style={[styles.container, mainContainerStyles]}>
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>My Profile</Text>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        
         {/* User Identity Card */}
         <View style={styles.userCard}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{avatarLabel}</Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.phoneNumber}>
-              +91 {phone_number || '----------'}
-            </Text>
+            <Text style={styles.phoneNumber}>+91 {phone_number || '----------'}</Text>
             <Text style={styles.memberSince}>OnePlace Member</Text>
           </View>
         </View>
@@ -120,7 +139,7 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
             <View style={styles.statIconWrap}>
-              <Target color={PRIMARY_OS} size={RFValue(18)} />
+              <Target color={colors.primary} size={RFValue(18)} />
             </View>
             <Text style={styles.statNumber}>{stats.totalHabits}</Text>
             <Text style={styles.statLabel}>Habits</Text>
@@ -136,10 +155,62 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
 
           <View style={styles.statCard}>
             <View style={styles.statIconWrap}>
-              <CheckCircle2 color="#10B981" size={RFValue(18)} />
+              <CheckCircle2 color={colors.success} size={RFValue(18)} />
             </View>
             <Text style={styles.statNumber}>{stats.totalCompletions}</Text>
             <Text style={styles.statLabel}>Completions</Text>
+          </View>
+        </View>
+
+        {/* Theme Settings */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Application Theme</Text>
+          <View style={styles.themeContainer}>
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelWrap}>
+                <Palette color={colors.text} size={RFValue(18)} />
+                <Text style={styles.settingLabel}>Theme Color</Text>
+              </View>
+              <View style={styles.colorPaletteRow}>
+                {THEME_PALETTE.map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    onPress={() => handleColorSelect(c)}
+                    style={[
+                      styles.colorSwatch,
+                      { backgroundColor: c },
+                      themeColor === c && styles.colorSwatchActive
+                    ]}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View style={[styles.settingRow, styles.settingRowNoBorder]}>
+              <View style={styles.settingLabelWrap}>
+                <Moon color={colors.text} size={RFValue(18)} />
+                <Text style={styles.settingLabel}>Appearance</Text>
+              </View>
+              <View style={styles.modeToggleRow}>
+                {['system', 'light', 'dark'].map((mode) => (
+                  <TouchableOpacity
+                    key={mode}
+                    onPress={() => handleModeSelect(mode)}
+                    style={[
+                      styles.modeBtn,
+                      colorMode === mode && { backgroundColor: colors.primary }
+                    ]}
+                  >
+                    <Text style={[
+                      styles.modeBtnText,
+                      colorMode === mode && { color: WHITE }
+                    ]}>
+                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
         </View>
 
@@ -155,22 +226,17 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
                   onPress={() => navigation.navigate('HabitDetail', { habit })}
                 >
                   <View style={styles.habitInfo}>
-                    <Text style={styles.habitTitle} numberOfLines={1}>
-                      {habit.title}
-                    </Text>
+                    <Text style={styles.habitTitle} numberOfLines={1}>{habit.title}</Text>
                     <Text style={styles.habitMeta}>
-                      {habit.category_name || 'Uncategorized'} •{' '}
-                      {habit.schedule_type}
+                      {habit.category_name || 'Uncategorized'} • {habit.schedule_type}
                     </Text>
                   </View>
                   <View style={styles.habitRight}>
                     <View style={styles.streakBadge}>
                       <Flame color={WHITE} size={RFValue(11)} />
-                      <Text style={styles.streakText}>
-                        {habit.streak || 0}
-                      </Text>
+                      <Text style={styles.streakText}>{habit.streak || 0}</Text>
                     </View>
-                    <ChevronRight color={GRAY9} size={RFValue(16)} />
+                    <ChevronRight color={colors.textSecondary} size={RFValue(16)} />
                   </View>
                 </TouchableOpacity>
               ))}
@@ -181,15 +247,12 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
         {habits.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>No habits yet.</Text>
-            <Text style={styles.emptySubText}>
-              Create your first habit to get started!
-            </Text>
+            <Text style={styles.emptySubText}>Create your first habit to get started!</Text>
           </View>
         )}
 
-        {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <LogOut color="#EF4444" size={RFValue(18)} />
+          <LogOut color={colors.danger} size={RFValue(18)} />
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -1,17 +1,10 @@
 import { StyleSheet } from 'react-native';
-import { HEIGHT, WIDTH } from '../../constants/config';
 import { RFValue } from 'react-native-responsive-fontsize';
-import {
-  BLACK,
-  WHITE,
-  BACKGROUND,
-  PRIMARY_OS,
-  GRAY9,
-} from '../../constants/color';
-import { INTER, SEMIBOLD, BOLD, REGULAR } from '../../constants/fontfamily';
+import { WIDTH, HEIGHT } from '../../constants/config';
+import { BOLD, SEMIBOLD, REGULAR, INTER } from '../../constants/fontfamily';
 
-export default StyleSheet.create({
-  container: { flex: 1, backgroundColor: BACKGROUND },
+const getStyles = (colors) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -19,7 +12,7 @@ export default StyleSheet.create({
     paddingHorizontal: '5%',
     paddingVertical: HEIGHT * 0.02,
   },
-  headerTitle: { fontFamily: BOLD, fontSize: RFValue(22), color: BLACK },
+  headerTitle: { fontFamily: BOLD, fontSize: RFValue(22), color: colors.text },
   todayBtn: {
     backgroundColor: '#DBEAFE',
     paddingHorizontal: 12,
@@ -29,14 +22,14 @@ export default StyleSheet.create({
   todayBtnText: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(12),
-    color: PRIMARY_OS,
+    color: colors.primary,
   },
   content: {
     paddingHorizontal: '5%',
     paddingBottom: HEIGHT * 0.1,
   },
   calendarCard: {
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 15,
     marginBottom: HEIGHT * 0.03,
@@ -50,11 +43,11 @@ export default StyleSheet.create({
   monthText: {
     fontFamily: REGULAR,
     fontSize: RFValue(16),
-    color: BLACK,
+    color: colors.text,
   },
   arrowText: {
     fontSize: RFValue(18),
-    color: GRAY9,
+    color: colors.textSecondary,
     fontFamily: BOLD,
     paddingHorizontal: 10,
   },
@@ -68,7 +61,7 @@ export default StyleSheet.create({
     textAlign: 'center',
     fontFamily: INTER,
     fontSize: RFValue(12),
-    color: GRAY9,
+    color: colors.textSecondary,
   },
   datesGrid: {
     flexDirection: 'row',
@@ -82,34 +75,34 @@ export default StyleSheet.create({
     borderRadius: 8,
     marginBottom: 5,
   },
-  dateCellSelected: { backgroundColor: PRIMARY_OS },
-  dateText: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: BLACK },
-  dateTextSelected: { color: WHITE },
+  dateCellSelected: { backgroundColor: colors.primary },
+  dateText: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: colors.text },
+  dateTextSelected: { color: colors.surface },
   statusDot: { width: 6, height: 6, borderRadius: 3, marginTop: 4 },
   detailsSection: { marginTop: HEIGHT * 0.01 },
   sectionTitle: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(16),
-    color: BLACK,
+    color: colors.text,
     marginBottom: 15,
   },
   habitRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
     borderWidth: 0.3,
-    borderColor: PRIMARY_OS,
+    borderColor: colors.primary,
   },
   habitInfo: { flex: 1 },
-  habitTitle: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: BLACK },
+  habitTitle: { fontFamily: SEMIBOLD, fontSize: RFValue(14), color: colors.text },
   habitMeta: {
     fontFamily: INTER,
     fontSize: RFValue(11),
-    color: GRAY9,
+    color: colors.textSecondary,
     marginTop: 4,
   },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
@@ -124,25 +117,25 @@ export default StyleSheet.create({
     borderRadius: WIDTH * 0.11,
   },
   customDaySelected: {
-    backgroundColor: PRIMARY_OS,
-    shadowColor: PRIMARY_OS,
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
   },
   customDayToday: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: `${colors.primary}15`,
     borderWidth: 1,
-    borderColor: PRIMARY_OS,
+    borderColor: colors.primary,
   },
   customDayText: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(13),
-    color: BLACK,
+    color: colors.text,
   },
   customDayTextSelected: {
-    color: WHITE,
+    color: colors.surface,
   },
   customDayTextDisabled: {
     color: '#D1D5DB', // light gray
@@ -151,13 +144,13 @@ export default StyleSheet.create({
     width: RFValue(4),
     height: RFValue(4),
     borderRadius: RFValue(2),
-    backgroundColor: PRIMARY_OS,
+    backgroundColor: colors.primary,
     marginTop: RFValue(2),
     position: 'absolute',
     bottom: RFValue(4),
   },
   customDayDotSelected: {
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
   },
 
   // Filter Chips
@@ -171,7 +164,7 @@ export default StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     marginRight: 10,
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     shadowColor: '#000',
@@ -187,17 +180,17 @@ export default StyleSheet.create({
   chipText: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(13),
-    color: GRAY9,
+    color: colors.textSecondary,
   },
   chipTextSelected: {
-    color: BLACK,
+    color: colors.text,
   },
 
   // Habit Card
   cardContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     padding: 16,
     borderRadius: 16,
     marginBottom: 12,
@@ -224,7 +217,7 @@ export default StyleSheet.create({
   cardTitle: {
     fontFamily: BOLD,
     fontSize: RFValue(16),
-    color: BLACK,
+    color: colors.text,
     marginBottom: 4,
   },
   cardSubtitle: {
@@ -251,3 +244,5 @@ export default StyleSheet.create({
     backgroundColor: '#FDE047', // using yellow instead of green to match brand, or light red as in prompt it said marks habit complete
   },
 });
+
+export default getStyles;

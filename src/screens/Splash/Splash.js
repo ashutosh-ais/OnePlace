@@ -8,6 +8,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { getDBConnection, createTables, getActiveUser } from '../../database/DatabaseHelper';
 import { authAction } from '../../redux/Slice/AuthSlice';
+import { themeAction } from '../../redux/Slice/ThemeSlice';
 import { initializeDatabase } from '../../redux/Slice/HabitSlice';
 import { PRIMARY_OS, WHITE } from '../../constants/color';
 import { BOLD, REGULAR } from '../../constants/fontfamily';
@@ -64,6 +65,13 @@ const Splash = ({ navigation }) => {
               user_id: activeUser.id,
               phone_number: activeUser.phone_number,
             }),
+          );
+          // Restore theme settings
+          dispatch(
+            themeAction.setThemeFromDB({
+              themeColor: activeUser.theme_color,
+              colorMode: activeUser.color_mode,
+            })
           );
           // Load their data
           await dispatch(initializeDatabase()).unwrap();

@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { useTheme } from '../../../theme/useTheme';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -12,12 +13,14 @@ import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import FocusAwareStatusBar from '../../../components/FocusAwareStatusBar';
 import withLoader from '../../../hoc/withLoader';
-import styles from './OTP.styles';
+import getStyles from './OTP.styles';
 import { authAction } from '../../../redux/Slice/AuthSlice';
 import { getDBConnection, getUserByPhone, createUser, setUserActive } from '../../../database/DatabaseHelper';
 import { initializeDatabase } from '../../../redux/Slice/HabitSlice';
 
 const OTPWithoutHoc = ({ navigation, route, setLoading, insets }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const { phoneNumber } = route.params || { phoneNumber: '9999999999' };
   const [otp, setOtp] = useState(['', '', '', '']);
   const inputRefs = useRef([]);
@@ -97,7 +100,7 @@ const OTPWithoutHoc = ({ navigation, route, setLoading, insets }) => {
       style={[styles.container, mainContainerStyles]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="#FFFFFF" />
 
       <View style={styles.header}>
         <TouchableOpacity

@@ -1,16 +1,24 @@
 import {
+  Activity,
+  Award,
+  BookOpen,
   CalendarCheck,
   CheckCircle2,
   Circle,
+  Coffee,
+  Dumbbell,
   Flame,
   Frown,
+  Heart,
   LayoutGrid,
   List,
   Meh,
+  Moon,
   Smile,
   Target,
   User,
   X,
+  Zap,
 } from 'lucide-react-native';
 import React, { useEffect, useState, useRef } from 'react';
 import {
@@ -146,6 +154,58 @@ const CircularProgressDate = ({ date, isSelected, progress, onPress }) => {
       </View>
     </TouchableOpacity>
   );
+};
+
+const ICON_MAP = {
+  Activity,
+  Dumbbell,
+  BookOpen,
+  Coffee,
+  Moon,
+  Smile,
+  Target,
+  Award,
+  Heart,
+  Zap,
+};
+
+const PALETTE = [
+  '#3B82F6',
+  '#10B981',
+  '#F59E0B',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#F97316',
+  '#6366F1',
+];
+
+const getHabitIconAndColor = (habit) => {
+  const bgIndex = habit.id ? Math.abs(habit.id) % PALETTE.length : 0;
+  const habitColor = habit.color || PALETTE[bgIndex];
+
+  let HabitIcon = ICON_MAP[habit.icon];
+  if (!HabitIcon) {
+    const titleLower = (habit.title || '').toLowerCase();
+    const catLower = (habit.category_name || habit.category || '').toLowerCase();
+    if (titleLower.includes('read') || titleLower.includes('book') || catLower.includes('read')) {
+      HabitIcon = BookOpen;
+    } else if (titleLower.includes('water') || titleLower.includes('health') || titleLower.includes('drink')) {
+      HabitIcon = Heart;
+    } else if (titleLower.includes('run') || titleLower.includes('walk') || titleLower.includes('gym') || titleLower.includes('workout') || titleLower.includes('fit')) {
+      HabitIcon = Dumbbell;
+    } else if (titleLower.includes('meditat') || titleLower.includes('mind') || titleLower.includes('sleep')) {
+      HabitIcon = Smile;
+    } else if (titleLower.includes('coffee') || titleLower.includes('tea')) {
+      HabitIcon = Coffee;
+    } else if (titleLower.includes('code') || titleLower.includes('work') || titleLower.includes('learn')) {
+      HabitIcon = Zap;
+    } else {
+      HabitIcon = Target;
+    }
+  }
+
+  return { habitColor, HabitIcon };
 };
 
 const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
@@ -396,31 +456,45 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
         ) : (
           <View style={dashboardView === 'grid' ? styles.gridContainer : null}>
             {displayedHabits.map(habit => {
+              const { habitColor, HabitIcon } = getHabitIconAndColor(habit);
+
               if (dashboardView === 'grid') {
                 return (
                   <TouchableOpacity
                     key={habit.id}
                     activeOpacity={0.8}
-                    onPress={() =>
-                      navigation.navigate('HabitDetail', { habit })
-                    }
+                    onPress={() => navigation.navigate('HabitDetail', { habit })}
                     style={styles.gridCard}
                   >
                     <View style={styles.gridHeaderRow}>
-                      <TouchableOpacity
-                        onPress={() => handleCheckboxTap(habit)}
+                      <View
+                        style={{
+                          width: RFValue(32),
+                          height: RFValue(32),
+                          borderRadius: RFValue(10),
+                          backgroundColor: `${habitColor}20`,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
                       >
-                        {habit.is_completed_on_date ? (
-                          <CheckCircle2 color={PRIMARY_OS} size={RFValue(20)} />
-                        ) : (
-                          <Circle color={GRAY9} size={RFValue(20)} />
-                        )}
-                      </TouchableOpacity>
-                      <View style={styles.gridStreak}>
-                        <Flame color="#EF4444" size={RFValue(10)} />
-                        <Text style={styles.gridStreakText}>
-                          {habit.streak || 0}
-                        </Text>
+                        <HabitIcon color={habitColor} size={RFValue(16)} />
+                      </View>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View style={[styles.gridStreak, { backgroundColor: '#EF444415', marginRight: RFValue(8) }]}>
+                          <Flame color="#EF4444" size={RFValue(10)} />
+                          <Text style={[styles.gridStreakText, { color: '#EF4444', fontFamily: BOLD }]}>
+                            {habit.streak || 0}
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity onPress={() => handleCheckboxTap(habit)}>
+                          {habit.is_completed_on_date ? (
+                            <CheckCircle2 color={habitColor} size={RFValue(20)} />
+                          ) : (
+                            <Circle color={`${habitColor}60`} size={RFValue(20)} />
+                          )}
+                        </TouchableOpacity>
                       </View>
                     </View>
                     <Text
@@ -447,31 +521,51 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                     onPress={() =>
                       navigation.navigate('HabitDetail', { habit })
                     }
-                    style={styles.listCard}
+                    style={[styles.listCard, { paddingVertical: RFValue(10) }]}
                   >
-                    <View style={styles.listContent}>
-                      <TouchableOpacity
-                        onPress={() => handleCheckboxTap(habit)}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <View
+                        style={{
+                          width: RFValue(34),
+                          height: RFValue(34),
+                          borderRadius: RFValue(10),
+                          backgroundColor: `${habitColor}20`,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          marginRight: RFValue(10),
+                        }}
                       >
-                        {habit.is_completed_on_date ? (
-                          <CheckCircle2 color={PRIMARY_OS} size={RFValue(16)} />
-                        ) : (
-                          <Circle color={GRAY9} size={RFValue(16)} />
-                        )}
-                      </TouchableOpacity>
+                        <HabitIcon color={habitColor} size={RFValue(16)} />
+                      </View>
+
                       <Text
                         style={[
                           styles.listTitle,
                           habit.is_completed_on_date &&
                             styles.habitTitleCompleted,
                         ]}
+                        numberOfLines={1}
                       >
                         {habit.title}
                       </Text>
                     </View>
-                    <Text style={styles.listStreakText}>
-                      🔥 {habit.streak || 0}
-                    </Text>
+
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EF444415', paddingHorizontal: RFValue(6), paddingVertical: RFValue(2), borderRadius: RFValue(6), marginRight: RFValue(10) }}>
+                        <Flame color="#EF4444" size={RFValue(12)} />
+                        <Text style={{ fontFamily: BOLD, fontSize: RFValue(11), color: '#EF4444', marginLeft: 3 }}>
+                          {habit.streak || 0}
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity onPress={() => handleCheckboxTap(habit)}>
+                        {habit.is_completed_on_date ? (
+                          <CheckCircle2 color={habitColor} size={RFValue(20)} />
+                        ) : (
+                          <Circle color={`${habitColor}60`} size={RFValue(20)} />
+                        )}
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 );
               }
@@ -484,14 +578,21 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                   onPress={() => navigation.navigate('HabitDetail', { habit })}
                   style={styles.habitCard}
                 >
-                  <View style={styles.habitMain}>
-                    <TouchableOpacity onPress={() => handleCheckboxTap(habit)}>
-                      {habit.is_completed_on_date ? (
-                        <CheckCircle2 color={PRIMARY_OS} size={RFValue(24)} />
-                      ) : (
-                        <Circle color={GRAY9} size={RFValue(24)} />
-                      )}
-                    </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <View
+                      style={{
+                        width: RFValue(40),
+                        height: RFValue(40),
+                        borderRadius: RFValue(12),
+                        backgroundColor: `${habitColor}20`,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginRight: RFValue(12),
+                      }}
+                    >
+                      <HabitIcon color={habitColor} size={RFValue(20)} />
+                    </View>
+
                     <View style={styles.habitDetails}>
                       <Text
                         style={[
@@ -499,22 +600,44 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                           habit.is_completed_on_date &&
                             styles.habitTitleCompleted,
                         ]}
+                        numberOfLines={1}
                       >
                         {habit.title}
                       </Text>
-                      <Text style={styles.habitMeta}>
-                        {habit.category_name || habit.category}{' '}
+                      <Text style={styles.habitMeta} numberOfLines={1}>
+                        {habit.category_name || habit.category || 'Habit'}{' '}
                         {habit.target_quantity
                           ? `• ${habit.target_quantity} ${habit.unit}`
                           : ''}
                       </Text>
                     </View>
                   </View>
-                  <View style={styles.streakBadge}>
-                    <Flame color="#EF4444" size={RFValue(14)} />
-                    <Text style={styles.streakText}>
-                      {habit.streak || 0} Day Streak
-                    </Text>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#EF444415',
+                        paddingHorizontal: RFValue(8),
+                        paddingVertical: RFValue(3),
+                        borderRadius: RFValue(8),
+                        marginRight: RFValue(12),
+                      }}
+                    >
+                      <Flame color="#EF4444" size={RFValue(12)} />
+                      <Text style={{ fontFamily: BOLD, fontSize: RFValue(11), color: '#EF4444', marginLeft: 4 }}>
+                        {habit.streak || 0}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity onPress={() => handleCheckboxTap(habit)}>
+                      {habit.is_completed_on_date ? (
+                        <CheckCircle2 color={habitColor} size={RFValue(24)} />
+                      ) : (
+                        <Circle color={`${habitColor}60`} size={RFValue(24)} />
+                      )}
+                    </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
               );

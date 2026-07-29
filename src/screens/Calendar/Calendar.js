@@ -7,12 +7,80 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
-import { GRAY9, PRIMARY_OS, BLACK, WHITE } from '../../constants/color';
+import { GRAY9, PRIMARY_OS } from '../../constants/color';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
-import { FilePlus, Check } from 'lucide-react-native';
+import {
+  Activity,
+  Award,
+  BookOpen,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Circle,
+  Coffee,
+  Dumbbell,
+  Flame,
+  Heart,
+  Moon,
+  Smile,
+  Target,
+  Zap,
+} from 'lucide-react-native';
 import { logHabitCompletion, undoHabitCompletion } from '../../redux/Slice/HabitSlice';
 import withLoader from '../../hoc/withLoader';
 import styles from './Calendar.styles';
+
+const ICON_MAP = {
+  Activity,
+  Dumbbell,
+  BookOpen,
+  Coffee,
+  Moon,
+  Smile,
+  Target,
+  Award,
+  Heart,
+  Zap,
+};
+
+const PALETTE = [
+  '#3B82F6',
+  '#10B981',
+  '#F59E0B',
+  '#8B5CF6',
+  '#EC4899',
+  '#06B6D4',
+  '#F97316',
+  '#6366F1',
+];
+
+const getHabitIconAndColor = (habit) => {
+  const bgIndex = habit.id ? Math.abs(habit.id) % PALETTE.length : 0;
+  const habitColor = habit.color || PALETTE[bgIndex];
+
+  let HabitIcon = ICON_MAP[habit.icon];
+  if (!HabitIcon) {
+    const titleLower = (habit.title || '').toLowerCase();
+    const catLower = (habit.category_name || habit.category || '').toLowerCase();
+    if (titleLower.includes('read') || titleLower.includes('book') || catLower.includes('read')) {
+      HabitIcon = BookOpen;
+    } else if (titleLower.includes('water') || titleLower.includes('health') || titleLower.includes('drink')) {
+      HabitIcon = Heart;
+    } else if (titleLower.includes('run') || titleLower.includes('walk') || titleLower.includes('gym') || titleLower.includes('workout') || titleLower.includes('fit')) {
+      HabitIcon = Dumbbell;
+    } else if (titleLower.includes('meditat') || titleLower.includes('mind') || titleLower.includes('sleep')) {
+      HabitIcon = Smile;
+    } else if (titleLower.includes('coffee') || titleLower.includes('tea')) {
+      HabitIcon = Coffee;
+    } else if (titleLower.includes('code') || titleLower.includes('work') || titleLower.includes('learn')) {
+      HabitIcon = Zap;
+    } else {
+      HabitIcon = Target;
+    }
+  }
+
+  return { habitColor, HabitIcon };
+};
 
 const CalendarWithoutHoc = ({ insets, navigation }) => {
   const [selectedDate, setSelectedDate] = useState(
@@ -217,82 +285,84 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
             </Text>
           ) : (
             displayList.map(habit => {
-              const pastelColors = [
-                '#FEE2E2',
-                '#FEF3C7',
-                '#D1FAE5',
-                '#DBEAFE',
-                '#F3E8FF',
-                '#FCE7F3',
-              ];
-              const bgIndex = habit.id ? habit.id % pastelColors.length : 0;
-              const iconBg = pastelColors[bgIndex];
+              const { habitColor, HabitIcon } = getHabitIconAndColor(habit);
 
               return (
-                <View key={habit.id} style={styles.cardContainer}>
-                  <View
-                    style={[
-                      styles.cardIconWrapper,
-                      { backgroundColor: iconBg },
-                    ]}
-                  >
-                    <Text style={styles.cardIconText}>
-                      {habit.title.charAt(0).toUpperCase()}
-                    </Text>
-                  </View>
-                  <View style={styles.cardMiddle}>
-                    <Text style={styles.cardTitle}>{habit.title}</Text>
-                    <Text style={styles.cardSubtitle}>
-                      Streak: {habit.streak || 0} days
-                    </Text>
-                  </View>
-                  <View style={styles.cardRight}>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.btnDoc]}
-                      onPress={() =>
-                        navigation.navigate('HabitDetail', { habit })
-                      }
+                <TouchableOpacity
+                  key={habit.id}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('HabitDetail', { habit })}
+                  style={styles.cardContainer}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                    <View
+                      style={{
+                        width: RFValue(40),
+                        height: RFValue(40),
+                        borderRadius: RFValue(12),
+                        backgroundColor: `${habitColor}20`,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginRight: RFValue(12),
+                      }}
                     >
-                      <FilePlus color={BLACK} size={RFValue(16)} />
-                    </TouchableOpacity>
+                      <HabitIcon color={habitColor} size={RFValue(20)} />
+                    </View>
 
-                    {!habit.isCompleted ? (
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.btnCheck]}
-                        onPress={() => {
-                          dispatch(
-                            logHabitCompletion({
-                              id: habit.id,
-                              metric: habit.targetQuantity || 1,
-                              mood: 'Good',
-                              notes: '',
-                              dateStr: selectedDate,
-                            }),
-                          );
-                        }}
-                      >
-                        <Check color={BLACK} size={RFValue(18)} />
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity
-                        style={[
-                          styles.actionBtn,
-                          { backgroundColor: '#D1FAE5' },
-                        ]}
-                        onPress={() => {
-                          dispatch(
-                            undoHabitCompletion({
-                              habitId: habit.id,
-                              dateStr: selectedDate,
-                            }),
-                          );
-                        }}
-                      >
-                        <Check color={'#065F46'} size={RFValue(18)} />
-                      </TouchableOpacity>
-                    )}
+                    <View style={styles.cardMiddle}>
+                      <Text style={styles.cardTitle} numberOfLines={1}>{habit.title}</Text>
+                      <Text style={styles.cardSubtitle} numberOfLines={1}>
+                        Streak: {habit.streak || 0} days
+                      </Text>
+                    </View>
+
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: '#EF444415',
+                        paddingHorizontal: RFValue(8),
+                        paddingVertical: RFValue(3),
+                        borderRadius: RFValue(8),
+                        marginRight: RFValue(12),
+                      }}
+                    >
+                      <Flame color="#EF4444" size={RFValue(12)} />
+                      <Text style={{ fontFamily: BOLD, fontSize: RFValue(11), color: '#EF4444', marginLeft: 4 }}>
+                        {habit.streak || 0}
+                      </Text>
+                    </View>
                   </View>
-                </View>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      if (!habit.isCompleted) {
+                        dispatch(
+                          logHabitCompletion({
+                            id: habit.id,
+                            metric: habit.targetQuantity || 1,
+                            mood: 'Good',
+                            notes: '',
+                            dateStr: selectedDate,
+                          }),
+                        );
+                      } else {
+                        dispatch(
+                          undoHabitCompletion({
+                            habitId: habit.id,
+                            dateStr: selectedDate,
+                          }),
+                        );
+                      }
+                    }}
+                  >
+                    {habit.isCompleted ? (
+                      <CheckCircle2 color={habitColor} size={RFValue(24)} />
+                    ) : (
+                      <Circle color={`${habitColor}60`} size={RFValue(24)} />
+                    )}
+                  </TouchableOpacity>
+                </TouchableOpacity>
               );
             })
           )}

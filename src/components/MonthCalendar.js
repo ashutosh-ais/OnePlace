@@ -1,3 +1,4 @@
+import { useTheme } from '../theme/useTheme';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -56,6 +57,9 @@ const generateMonthGrid = habits => {
 };
 
 const MonthCalendar = ({ habits }) => {
+  const { colors, isDark } = useTheme();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
   const grid = React.useMemo(() => generateMonthGrid(habits || []), [habits]);
 
   const getStatusColor = status => {
@@ -126,12 +130,12 @@ const MonthCalendar = ({ habits }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
-    backgroundColor: WHITE,
+    backgroundColor: colors.surface,
     borderRadius: RFValue(12),
     borderWidth: 1,
-    borderColor: INPUT_BORDER,
+    borderColor: colors.border,
     padding: RFValue(16),
   },
   row: {
@@ -146,7 +150,7 @@ const styles = StyleSheet.create({
   headerText: {
     fontFamily: BOLD,
     fontSize: RFValue(12),
-    color: BLACK,
+    color: colors.text,
   },
   grid: {
     flexDirection: 'row',
@@ -185,7 +189,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontFamily: REGULAR,
     fontSize: RFValue(11),
-    color: GRAY9,
+    color: colors.textSecondary,
   },
 });
 

@@ -1,3 +1,4 @@
+import { useTheme } from '../theme/useTheme';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -33,6 +34,9 @@ const generateHeatmapData = (habits) => {
 };
 
 const Heatmap = ({ habits }) => {
+  const { colors, isDark } = useTheme();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
+
   const data = React.useMemo(() => generateHeatmapData(habits || []), [habits]);
   const scrollRef = useRef(null);
 
@@ -46,11 +50,11 @@ const Heatmap = ({ habits }) => {
   }, [data]);
 
   const getColor = (count) => {
-    if (count === 0) return '#F3F4F6'; // Gray
-    if (count === 1) return '#D1FAE5'; // Light green
-    if (count === 2) return '#6EE7B7'; 
-    if (count === 3) return '#34D399'; 
-    return PRIMARY_OS; // Dark green
+    if (count === 0) return isDark ? colors.border : '#F3F4F6';
+    if (count === 1) return isDark ? `${colors.primary}40` : '#D1FAE5';
+    if (count === 2) return isDark ? `${colors.primary}70` : '#6EE7B7';
+    if (count === 3) return isDark ? `${colors.primary}90` : '#34D399';
+    return colors.primary;
   };
 
   return (
@@ -91,7 +95,7 @@ const Heatmap = ({ habits }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (colors) => StyleSheet.create({
   container: {
     padding: RFValue(15),
     backgroundColor: '#FFFFFF',
@@ -122,7 +126,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontFamily: REGULAR,
     fontSize: RFValue(10),
-    color: GRAY9,
+    color: colors.textSecondary,
     marginHorizontal: RFValue(4),
   },
   legendColors: {
