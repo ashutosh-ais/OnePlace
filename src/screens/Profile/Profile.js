@@ -1,5 +1,14 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { ScrollView, Text, TouchableOpacity, View, Alert } from 'react-native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+  Animated,
+  Easing,
+  useColorScheme,
+} from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { useFocusEffect } from '@react-navigation/native';
@@ -17,7 +26,7 @@ import {
 } from 'lucide-react-native';
 import { WHITE } from '../../constants/color';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { WIDTH } from '../../constants/config';
+import { WIDTH, HEIGHT } from '../../constants/config';
 import { authAction } from '../../redux/Slice/AuthSlice';
 import { themeAction } from '../../redux/Slice/ThemeSlice';
 import {
@@ -26,7 +35,7 @@ import {
   setUserActive,
 } from '../../database/DatabaseHelper';
 import { useTheme } from '../../theme/useTheme';
-import { THEME_PALETTE } from '../../theme/Theme';
+import { THEME_PALETTE, lightColors, darkColors } from '../../theme/Theme';
 
 import { getHabitIconAndColor } from '../../constants/icons';
 
@@ -119,14 +128,67 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
     }
   };
 
-  const handleColorSelect = color => {
-    dispatch(themeAction.setThemeColor(color));
-    updateThemeInDB('theme_color', color);
+  const circleAnim = useRef(new Animated.Value(0)).current;
+  const circleOpacity = useRef(new Animated.Value(0)).current;
+  const [animConfig, setAnimConfig] = useState({
+    x: WIDTH / 2,
+    y: HEIGHT / 2,
+    color: '#3B82F6',
+  });
+
+  const triggerCircularReveal = (e, fillColor, callback) => {
+    let touchX = WIDTH / 2;
+    let touchY = HEIGHT / 2;
+    if (e && e.nativeEvent && e.nativeEvent.pageX !== undefined) {
+      touchX = e.nativeEvent.pageX;
+      touchY = e.nativeEvent.pageY;
+    }
+    setAnimConfig({ x: touchX, y: touchY, color: fillColor });
+    circleAnim.setValue(0);
+    circleOpacity.setValue(0.65);
+
+    requestAnimationFrame(() => {
+      callback();
+
+      Animated.parallel([
+        Animated.timing(circleAnim, {
+          toValue: 1,
+          duration: 450,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          Animated.delay(220),
+          Animated.timing(circleOpacity, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+    });
   };
 
-  const handleModeSelect = mode => {
-    dispatch(themeAction.setColorMode(mode));
-    updateThemeInDB('color_mode', mode);
+  const handleColorSelect = (e, color) => {
+    triggerCircularReveal(e, color, () => {
+      dispatch(themeAction.setThemeColor(color));
+      updateThemeInDB('theme_color', color);
+    });
+  };
+
+  const systemScheme = useColorScheme();
+
+  const handleModeSelect = (e, mode) => {
+    const isTargetDark =
+      mode === 'dark' || (mode === 'system' && systemScheme === 'dark');
+    const targetBg = isTargetDark
+      ? darkColors.background
+      : lightColors.background;
+
+    triggerCircularReveal(e, targetBg, () => {
+      dispatch(themeAction.setColorMode(mode));
+      updateThemeInDB('color_mode', mode);
+    });
   };
 
   return (
@@ -213,7 +275,7 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
                 {THEME_PALETTE.map(c => (
                   <TouchableOpacity
                     key={c}
-                    onPress={() => handleColorSelect(c)}
+                    onPress={e => handleColorSelect(e, c)}
                     style={[
                       styles.colorSwatch,
                       { backgroundColor: c },
@@ -233,7 +295,7 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
                 {['system', 'light', 'dark'].map(mode => (
                   <TouchableOpacity
                     key={mode}
-                    onPress={() => handleModeSelect(mode)}
+                    onPress={e => handleModeSelect(e, mode)}
                     style={[
                       styles.modeBtn,
                       colorMode === mode && { backgroundColor: colors.primary },
@@ -326,6 +388,28 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
           <Text style={styles.logoutText}>Log Out</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Expanding Circular Reveal Overlay for Theme & Dark Mode Switching */}
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.revealOverlay,
+          {
+            left: animConfig.x - 30,
+            top: animConfig.y - 30,
+            backgroundColor: animConfig.color,
+            opacity: circleOpacity,
+            transform: [
+              {
+                scale: circleAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.1, 40],
+                }),
+              },
+            ],
+          },
+        ]}
+      />
     </View>
   );
 };

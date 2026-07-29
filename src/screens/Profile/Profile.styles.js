@@ -262,6 +262,13 @@ const getStyles = colors =>
       color: colors.danger,
       marginLeft: RFValue(8),
     },
+    revealOverlay: {
+      position: 'absolute',
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      zIndex: 99999,
+    },
   });
 
 export default getStyles;

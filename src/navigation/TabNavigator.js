@@ -15,18 +15,19 @@ import Dashboard from '../screens/Dashboard/Dashboard';
 import Calendar from '../screens/Calendar/Calendar';
 import Analytics from '../screens/Analytics/Analytics';
 import Profile from '../screens/Profile/Profile';
-import { PRIMARY_OS, GRAY9, WHITE, INPUT_BORDER } from '../constants/color';
+import { WHITE } from '../constants/color';
 import { SEMIBOLD } from '../constants/fontfamily';
 import { WIDTH } from '../constants/config';
+import { useTheme } from '../theme/useTheme';
 
 const Tab = createBottomTabNavigator();
 
 // Custom Floating Add Button for Tab Bar with periodic pop animation
-const CustomAddButton = ({ onPress }) => {
+const CustomAddButton = ({ onPress, colors }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Periodically pop every 3 seconds
+    // Periodically pop every 10 seconds
     const interval = setInterval(() => {
       Animated.sequence([
         Animated.timing(scaleAnim, {
@@ -53,7 +54,14 @@ const CustomAddButton = ({ onPress }) => {
       activeOpacity={0.8}
     >
       <Animated.View
-        style={[styles.addBtn, { transform: [{ scale: scaleAnim }] }]}
+        style={[
+          styles.addBtn,
+          {
+            backgroundColor: colors.primary,
+            borderColor: colors.surface,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
       >
         <Plus color={WHITE} size={RFValue(24)} strokeWidth={2.5} />
       </Animated.View>
@@ -62,14 +70,22 @@ const CustomAddButton = ({ onPress }) => {
 };
 
 const TabNavigator = ({ navigation }) => {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: PRIMARY_OS,
-        tabBarInactiveTintColor: GRAY9,
-        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+          },
+        ],
         tabBarLabelStyle: styles.tabLabel,
         animation: 'shift',
         tabBarIcon: ({ color, size }) => {
@@ -93,8 +109,9 @@ const TabNavigator = ({ navigation }) => {
         component={View}
         options={{
           tabBarLabel: () => null, // hide label for the middle button
-          tabBarButton: props => (
+          tabBarButton: () => (
             <CustomAddButton
+              colors={colors}
               onPress={() => navigation.navigate('CreateHabit')}
             />
           ),
@@ -109,9 +126,7 @@ const TabNavigator = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: WHITE,
     borderTopWidth: 1,
-    borderTopColor: INPUT_BORDER,
     height: RFValue(60),
     paddingBottom: RFValue(8),
     paddingTop: RFValue(8),
@@ -131,11 +146,9 @@ const styles = StyleSheet.create({
     width: WIDTH * 0.155,
     height: WIDTH * 0.155,
     borderRadius: WIDTH * 0.155,
-    backgroundColor: PRIMARY_OS,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 4,
-    borderColor: WHITE,
     top: -3,
   },
 });
