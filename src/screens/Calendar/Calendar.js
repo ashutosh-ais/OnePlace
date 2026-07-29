@@ -1,4 +1,6 @@
-import React, { useState, useMemo } from 'react';
+/* eslint-disable react/no-unstable-nested-components */
+import React, { useState, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -22,7 +24,11 @@ import {
   Target,
   Zap,
 } from 'lucide-react-native';
-import { logHabitCompletion, undoHabitCompletion } from '../../redux/Slice/HabitSlice';
+import {
+  initializeDatabase,
+  logHabitCompletion,
+  undoHabitCompletion,
+} from '../../redux/Slice/HabitSlice';
 import withLoader from '../../hoc/withLoader';
 import getStyles from './Calendar.styles';
 
@@ -50,7 +56,7 @@ const PALETTE = [
   '#6366F1',
 ];
 
-const getHabitIconAndColor = (habit) => {
+const getHabitIconAndColor = habit => {
   const bgIndex = habit.id ? Math.abs(habit.id) % PALETTE.length : 0;
   const habitColor = habit.color || PALETTE[bgIndex];
 
@@ -116,6 +122,12 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
   const { habits } = useSelector(state => state.habits);
   const dispatch = useDispatch();
 
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(initializeDatabase());
+    }, [dispatch]),
+  );
+
   const mainContainerStyles = {
     paddingTop: insets.top,
     paddingLeft: insets.left,
@@ -161,11 +173,17 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
       habit.schedule_type === 'Specific Days' ||
       habit.scheduleType === 'Specific Days'
     ) {
-      const d = new Date(dateStr);
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const dayStr = days[d.getDay()];
-      const val = habit.schedule_value || habit.scheduleValue || '';
-      return val.includes(dayStr);
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const year = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const d = new Date(Date.UTC(year, month, day));
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const dayStr = days[d.getUTCDay()];
+        const val = habit.schedule_value || habit.scheduleValue || '';
+        return val.includes(dayStr);
+      }
     }
     return true;
   };

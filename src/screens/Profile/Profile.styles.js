@@ -232,6 +232,7 @@ const getStyles = colors =>
       borderRadius: RFValue(12),
       borderWidth: 1,
       borderColor: colors.border,
+      marginBottom: HEIGHT * 0.01,
     },
     emptyText: {
       fontFamily: SEMIBOLD,

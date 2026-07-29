@@ -73,7 +73,7 @@ export const createNewCategory = createAsyncThunk(
     const { auth } = getState();
     const db = await getDBConnection();
     await addCategory(db, name, auth.user_id);
-    dispatch(initializeDatabase());
+    await dispatch(initializeDatabase()).unwrap();
   },
 );
 
@@ -106,7 +106,7 @@ export const createRichHabit = createAsyncThunk(
       reminderTime,
       checklists,
     );
-    dispatch(initializeDatabase());
+    await dispatch(initializeDatabase()).unwrap();
   },
 );
 
@@ -116,7 +116,7 @@ export const logHabitCompletion = createAsyncThunk(
     const { id, metric, mood, notes, dateStr } = payload;
     const db = await getDBConnection();
     await addCompletion(db, id, metric, mood, notes, dateStr);
-    dispatch(initializeDatabase());
+    await dispatch(initializeDatabase()).unwrap();
   },
 );
 
@@ -124,13 +124,12 @@ export const undoHabitCompletion = createAsyncThunk(
   'habits/undoHabitCompletion',
   async (payload, { dispatch }) => {
     const db = await getDBConnection();
-    // Allow either passing a raw ID for today, or an object {habitId, dateStr}
     if (typeof payload === 'object') {
       await removeCompletion(db, payload.habitId, payload.dateStr);
     } else {
       await removeCompletion(db, payload);
     }
-    dispatch(initializeDatabase());
+    await dispatch(initializeDatabase()).unwrap();
   },
 );
 
@@ -139,7 +138,7 @@ export const removeHabit = createAsyncThunk(
   async (habitId, { dispatch }) => {
     const db = await getDBConnection();
     await deleteHabit(db, habitId);
-    dispatch(initializeDatabase());
+    await dispatch(initializeDatabase()).unwrap();
   },
 );
 
@@ -148,7 +147,7 @@ export const editHabit = createAsyncThunk(
   async ({ habitId, fields }, { dispatch }) => {
     const db = await getDBConnection();
     await updateHabit(db, habitId, fields);
-    dispatch(initializeDatabase());
+    await dispatch(initializeDatabase()).unwrap();
   },
 );
 

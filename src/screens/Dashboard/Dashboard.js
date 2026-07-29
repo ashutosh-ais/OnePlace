@@ -21,7 +21,8 @@ import {
   X,
   Zap,
 } from 'lucide-react-native';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   Modal,
   ScrollView,
@@ -41,6 +42,7 @@ import { GRAY9, PRIMARY_OS, WHITE } from '../../constants/color';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
 import withLoader from '../../hoc/withLoader';
 import {
+  initializeDatabase,
   logHabitCompletion,
   setDashboardView,
   undoHabitCompletion,
@@ -54,12 +56,17 @@ const isHabitScheduledForDate = (habit, dateStr) => {
     habit.schedule_type === 'Specific Days' ||
     habit.scheduleType === 'Specific Days'
   ) {
-    const d = new Date(dateStr);
-    const todayIndex = d.getDay();
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const todayStr = days[todayIndex];
-    const val = habit.schedule_value || habit.scheduleValue || '';
-    return val.includes(todayStr);
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const d = new Date(Date.UTC(year, month, day));
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const todayStr = days[d.getUTCDay()];
+      const val = habit.schedule_value || habit.scheduleValue || '';
+      return val.includes(todayStr);
+    }
   }
   return true;
 };
@@ -651,6 +658,12 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   const [metric, setMetric] = useState('');
   const [mood, setMood] = useState('Good');
   const [notes, setNotes] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      dispatch(initializeDatabase());
+    }, [dispatch]),
+  );
 
   useEffect(() => {
     setLoading(loading);
