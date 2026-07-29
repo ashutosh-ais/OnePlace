@@ -10,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowRight, Phone, ShieldCheck, Sparkles } from 'lucide-react-native';
+import { RFValue } from 'react-native-responsive-fontsize';
 import FocusAwareStatusBar from '../../../components/FocusAwareStatusBar';
 import withLoader from '../../../hoc/withLoader';
 import { useTheme } from '../../../theme/useTheme';
@@ -47,16 +49,17 @@ const LoginWithoutHoc = ({ navigation, setLoading, insets }) => {
     >
       <FocusAwareStatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor="#FFFFFF"
+        backgroundColor={colors.surface}
       />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.brandContainer}>
           <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>OP</Text>
+            <Sparkles color={colors.primary} size={RFValue(28)} />
           </View>
         </View>
 
@@ -75,12 +78,13 @@ const LoginWithoutHoc = ({ navigation, setLoading, insets }) => {
               isFocused && styles.inputContainerFocused,
             ]}
           >
+            <Phone color={isFocused ? colors.primary : colors.textSecondary} size={RFValue(18)} />
             <Text style={styles.countryCode}>+91</Text>
             <View style={styles.divider} />
             <TextInput
               style={styles.input}
               placeholder="00000 00000"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="number-pad"
               maxLength={10}
               value={phone}
@@ -101,7 +105,17 @@ const LoginWithoutHoc = ({ navigation, setLoading, insets }) => {
           onPress={handleContinue}
         >
           <Text style={styles.buttonText}>Continue</Text>
+          <ArrowRight
+            color={phone.length === 10 ? colors.surface : colors.textSecondary}
+            size={RFValue(18)}
+            style={styles.buttonIcon}
+          />
         </TouchableOpacity>
+
+        <View style={styles.footerBadge}>
+          <ShieldCheck color={colors.textSecondary} size={RFValue(14)} />
+          <Text style={styles.footerText}>Encrypted & Secure Login</Text>
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );

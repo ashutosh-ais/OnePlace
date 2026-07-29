@@ -180,6 +180,10 @@ const ProfileWithoutHoc = ({ navigation, insets }) => {
               console.log('Error clearing active user:', err);
             }
             dispatch(authAction.logout());
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
           },
         },
       ],

@@ -303,7 +303,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           onPress={() => navigation.goBack()}
           style={styles.headerBtn}
         >
-          <X color="#111827" size={RFValue(22)} />
+          <X color={colors.text} size={RFValue(22)} />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={[styles.headerIcon, { backgroundColor: selectedColor }]}>

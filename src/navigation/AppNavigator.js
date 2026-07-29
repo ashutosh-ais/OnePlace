@@ -18,7 +18,7 @@ const AppNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-          animation: 'slide_from_right',
+          // animation: 'slide_from_right',
         }}
         initialRouteName="Splash"
       >
@@ -26,7 +26,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Splash"
           component={Splash}
-          options={{ animation: 'none' }}
+          // options={{ animation: 'none' }}
         />
 
         {/* Authentication Stack */}
@@ -37,7 +37,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="MainTabs"
           component={TabNavigator}
-          options={{ animation: 'fade' }}
+          // options={{ animation: 'fade' }}
         />
 
         {/* Inner OS Modules */}
@@ -45,12 +45,12 @@ const AppNavigator = () => {
         <Stack.Screen
           name="CreateHabit"
           component={CreateHabit}
-          options={{ animation: 'slide_from_bottom' }}
+          // options={{ animation: 'slide_from_bottom' }}
         />
         <Stack.Screen
           name="EditHabit"
           component={EditHabit}
-          options={{ animation: 'slide_from_bottom' }}
+          // options={{ animation: 'slide_from_bottom' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

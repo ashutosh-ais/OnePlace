@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import {
   Home,
@@ -17,21 +17,49 @@ import Analytics from '../screens/Analytics/Analytics';
 import Profile from '../screens/Profile/Profile';
 import { PRIMARY_OS, GRAY9, WHITE, INPUT_BORDER } from '../constants/color';
 import { SEMIBOLD } from '../constants/fontfamily';
+import { WIDTH } from '../constants/config';
 
 const Tab = createBottomTabNavigator();
 
-// Custom Floating Add Button for Tab Bar
-const CustomAddButton = ({ onPress }) => (
-  <TouchableOpacity
-    style={styles.addBtnContainer}
-    onPress={onPress}
-    activeOpacity={0.8}
-  >
-    <View style={styles.addBtn}>
-      <Plus color={WHITE} size={RFValue(24)} strokeWidth={2.5} />
-    </View>
-  </TouchableOpacity>
-);
+// Custom Floating Add Button for Tab Bar with periodic pop animation
+const CustomAddButton = ({ onPress }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    // Periodically pop every 3 seconds
+    const interval = setInterval(() => {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.18,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [scaleAnim]);
+
+  return (
+    <TouchableOpacity
+      style={styles.addBtnContainer}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Animated.View
+        style={[styles.addBtn, { transform: [{ scale: scaleAnim }] }]}
+      >
+        <Plus color={WHITE} size={RFValue(24)} strokeWidth={2.5} />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+};
 
 const TabNavigator = ({ navigation }) => {
   return (
@@ -96,20 +124,19 @@ const styles = StyleSheet.create({
     marginTop: RFValue(4),
   },
   addBtnContainer: {
-    top: -RFValue(15),
     justifyContent: 'center',
     alignItems: 'center',
   },
   addBtn: {
-    width: RFValue(50),
-    height: RFValue(50),
-    borderRadius: RFValue(16), // modern squircle-like radius
+    width: WIDTH * 0.155,
+    height: WIDTH * 0.155,
+    borderRadius: WIDTH * 0.155,
     backgroundColor: PRIMARY_OS,
     justifyContent: 'center',
     alignItems: 'center',
-    // No shadow for crisp flat look
     borderWidth: 4,
-    borderColor: WHITE, // to blend with the background seamlessly
+    borderColor: WHITE,
+    top: -3,
   },
 });
 
