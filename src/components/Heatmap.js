@@ -15,7 +15,7 @@ const generateHeatmapData = (habits) => {
     for (let d = 6; d >= 0; d--) {
       const pastDate = new Date(today);
       pastDate.setDate(today.getDate() - (w * 7 + d));
-      const dateStr = pastDate.toISOString().split('T')[0];
+      const dateStr = new Date(pastDate.getTime() - pastDate.getTimezoneOffset() * 60000).toISOString().split('T')[0];
       
       // Count completions across all habits for this date
       let completionsCount = 0;

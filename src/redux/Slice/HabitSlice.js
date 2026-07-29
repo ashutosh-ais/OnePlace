@@ -22,7 +22,7 @@ export const initializeDatabase = createAsyncThunk(
       }));
 
       // Check if completed today
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
       const completed_today = history.some(h => h.date.startsWith(todayStr));
 
       return {

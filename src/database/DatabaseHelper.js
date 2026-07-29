@@ -100,12 +100,19 @@ export const getHabits = async db => {
   try {
     const habits = [];
     const query = `
-      SELECT Habits.*, Categories.name as category_name 
+      SELECT Habits.* 
       FROM Habits 
-      LEFT JOIN Categories ON Habits.category_id = Categories.id
       ORDER BY Habits.created_at DESC
     `;
     const results = await db.executeSql(query);
+
+    const catQuery = `SELECT * FROM Categories`;
+    const catRes = await db.executeSql(catQuery);
+    const catMap = {};
+    for (let i = 0; i < catRes[0].rows.length; i++) {
+        const row = catRes[0].rows.item(i);
+        catMap[row.id] = row.name;
+    }
     
     const completionsRes = await db.executeSql(`SELECT habit_id, date(completed_at) as date, metric, mood, notes FROM Completions`);
     const allCompletions = {};
@@ -123,6 +130,16 @@ export const getHabits = async db => {
     results.forEach(result => {
       for (let index = 0; index < result.rows.length; index++) {
         const item = result.rows.item(index);
+        let cats = [];
+        try {
+            const parsed = JSON.parse(item.category_id);
+            if (Array.isArray(parsed)) cats = parsed;
+            else cats = [item.category_id];
+        } catch(e) {
+            cats = [item.category_id];
+        }
+        item.category_name = cats.map(cId => catMap[cId]).filter(Boolean).join(', ');
+
         item.checklists = item.checklists ? JSON.parse(item.checklists) : [];
         item.history = allCompletions[item.id] || [];
         item.completed_today = item.history.some(h => h.date.startsWith(todayStr));

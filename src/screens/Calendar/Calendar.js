@@ -16,7 +16,7 @@ import styles from './Calendar.styles';
 
 const CalendarWithoutHoc = ({ insets, navigation }) => {
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0],
+    new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
   );
   const [filter, setFilter] = useState('All'); // 'All' | 'Due'
   const { habits } = useSelector(state => state.habits);
@@ -106,7 +106,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
         <TouchableOpacity
           style={styles.todayBtn}
           onPress={() =>
-            setSelectedDate(new Date().toISOString().split('T')[0])
+            setSelectedDate(new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0])
           }
         >
           <Text style={styles.todayBtnText}>Today</Text>

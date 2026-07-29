@@ -62,11 +62,13 @@ const isHabitScheduledForDate = (habit, dateStr) => {
 
 // Mini Heatmap Component for Grid View
 const MiniHeatmap = ({ history }) => {
+  const getLocalISODate = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
   // Generate last 7 days array
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().split('T')[0];
+    return getLocalISODate(d);
   });
 
   return (
@@ -152,7 +154,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   const { name } = useSelector(state => state.auth);
 
   const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split('T')[0],
+    new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
   );
   const scrollRef = useRef(null);
 
@@ -178,7 +180,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   useEffect(() => {
     if (scrollRef.current) {
       const index = dashboardDates.findIndex(
-        d => d.toISOString().split('T')[0] === selectedDate,
+        d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0] === selectedDate,
       );
       if (index > -1) {
         setTimeout(() => {
@@ -296,7 +298,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
           contentContainerStyle={styles.timelineScroll}
         >
           {dashboardDates.map((date, i) => {
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0];
             const isSelected = dateStr === selectedDate;
             const progress = getProgressForDate(dateStr);
             return (

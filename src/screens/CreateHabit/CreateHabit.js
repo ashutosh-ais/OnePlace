@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { ScrollView, Text, TextInput, TouchableOpacity, View, Alert, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import ActionSheet from 'react-native-actions-sheet';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { createRichHabit, createNewCategory } from '../../redux/Slice/HabitSlice';
@@ -18,7 +19,8 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
   const { categories } = useSelector(state => state.habits);
 
   const [title, setTitle] = useState('');
-  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const actionSheetRef = useRef(null);
   const [scheduleType, setScheduleType] = useState('Every Day');
   
   // Specific Days Engine
@@ -45,8 +47,16 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
     setLoading(true);
     await dispatch(createNewCategory(newCategoryName.trim()));
     setNewCategoryName('');
-    setIsCreatingCategory(false);
+    actionSheetRef.current?.hide();
     setLoading(false);
+  };
+
+  const toggleCategory = (catId) => {
+    if (selectedCategoryIds.includes(catId)) {
+      setSelectedCategoryIds(selectedCategoryIds.filter(id => id !== catId));
+    } else {
+      setSelectedCategoryIds([...selectedCategoryIds, catId]);
+    }
   };
 
   const toggleDay = (dayId) => {
@@ -59,14 +69,14 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
 
   const handleCreate = async () => {
     if (!title.trim()) return Alert.alert('Missing Field', 'Please enter a habit name.');
-    if (!selectedCategoryId) return Alert.alert('Missing Field', 'Please select a category.');
+    if (selectedCategoryIds.length === 0) return Alert.alert('Missing Field', 'Please select at least one category.');
     if (scheduleType === 'Specific Days' && selectedDays.length === 0) return Alert.alert('Missing Field', 'Please select at least one day.');
 
     const scheduleValue = scheduleType === 'Specific Days' ? selectedDays.join(',') : '';
 
     setLoading(true);
     await dispatch(createRichHabit({ 
-      categoryId: selectedCategoryId, 
+      categoryId: JSON.stringify(selectedCategoryIds), 
       title: title.trim(), 
       scheduleType,
       scheduleValue,
@@ -80,7 +90,10 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
   };
 
   return (
-    <View style={[styles.container, mainContainerStyles]}>
+    <KeyboardAvoidingView 
+      style={[styles.container, mainContainerStyles]} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       <View style={styles.header}>
@@ -93,7 +106,7 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {/* Name Input */}
         <View style={styles.section}>
           <Text style={styles.label}>Habit Name</Text>
@@ -110,47 +123,27 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
         <View style={styles.section}>
           <View style={styles.labelRow}>
             <Text style={styles.label}>Category</Text>
-            {!isCreatingCategory && (
-              <TouchableOpacity onPress={() => setIsCreatingCategory(true)}>
-                <Text style={styles.addText}>+ New</Text>
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity onPress={() => actionSheetRef.current?.show()}>
+              <Text style={styles.addText}>+ New</Text>
+            </TouchableOpacity>
           </View>
           
-          {isCreatingCategory ? (
-            <View style={styles.categoryCreatorRow}>
-              <TextInput
-                style={[styles.input, { flex: 1, padding: RFValue(10) }]}
-                placeholder="Category Name"
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-                autoFocus
-              />
-              <TouchableOpacity style={styles.catSaveBtn} onPress={handleCreateCategory}>
-                <Check color={WHITE} size={RFValue(18)} />
+          <ScrollView horizontal keyboardShouldPersistTaps="handled" showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+            {categories.map(cat => (
+              <TouchableOpacity
+                key={cat.id}
+                style={[styles.chip, selectedCategoryIds.includes(cat.id) && styles.chipActive]}
+                onPress={() => toggleCategory(cat.id)}
+              >
+                <Text style={[styles.chipText, selectedCategoryIds.includes(cat.id) && styles.chipTextActive]}>
+                  {cat.name}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.catCancelBtn} onPress={() => setIsCreatingCategory(false)}>
-                <X color={GRAY9} size={RFValue(18)} />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
-              {categories.map(cat => (
-                <TouchableOpacity
-                  key={cat.id}
-                  style={[styles.chip, selectedCategoryId === cat.id && styles.chipActive]}
-                  onPress={() => setSelectedCategoryId(cat.id)}
-                >
-                  <Text style={[styles.chipText, selectedCategoryId === cat.id && styles.chipTextActive]}>
-                    {cat.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-              {categories.length === 0 && (
-                <Text style={styles.subLabel}>No categories yet. Click "+ New" to add one.</Text>
-              )}
-            </ScrollView>
-          )}
+            ))}
+            {categories.length === 0 && (
+              <Text style={styles.subLabel}>No categories yet. Click "+ New" to add one.</Text>
+            )}
+          </ScrollView>
         </View>
 
         {/* Advanced Scheduling Engine */}
@@ -272,7 +265,23 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
           <Text style={styles.saveBtnText}>Create Habit</Text>
         </TouchableOpacity>
       </View>
-    </View>
+
+      <ActionSheet ref={actionSheetRef} containerStyle={styles.actionSheetContainer}>
+        <View style={styles.actionSheetContent}>
+          <Text style={styles.actionSheetTitle}>Create New Category</Text>
+          <TextInput
+            style={styles.actionSheetInput}
+            placeholder="Category Name"
+            placeholderTextColor="#9CA3AF"
+            value={newCategoryName}
+            onChangeText={setNewCategoryName}
+          />
+          <TouchableOpacity style={styles.actionSheetSaveBtn} onPress={handleCreateCategory}>
+            <Text style={styles.actionSheetSaveText}>Save Category</Text>
+          </TouchableOpacity>
+        </View>
+      </ActionSheet>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -312,6 +321,12 @@ const styles = StyleSheet.create({
   bottomBar: { position: 'absolute', bottom: 0, width: '100%', backgroundColor: WHITE, borderTopWidth: 1, borderColor: INPUT_BORDER, paddingHorizontal: '5%', paddingTop: RFValue(15) },
   saveBtn: { backgroundColor: PRIMARY_OS, borderRadius: RFValue(12), paddingVertical: RFValue(15), alignItems: 'center' },
   saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: WHITE },
+  actionSheetContainer: { borderTopLeftRadius: RFValue(24), borderTopRightRadius: RFValue(24), paddingBottom: RFValue(30) },
+  actionSheetContent: { padding: RFValue(20) },
+  actionSheetTitle: { fontFamily: BOLD, fontSize: RFValue(16), color: BLACK, marginBottom: RFValue(15) },
+  actionSheetInput: { borderWidth: 1, borderColor: INPUT_BORDER, borderRadius: RFValue(12), padding: RFValue(15), fontFamily: REGULAR, fontSize: RFValue(14), color: BLACK, backgroundColor: '#F9FAFB', marginBottom: RFValue(15) },
+  actionSheetSaveBtn: { backgroundColor: PRIMARY_OS, borderRadius: RFValue(12), paddingVertical: RFValue(15), alignItems: 'center' },
+  actionSheetSaveText: { fontFamily: BOLD, fontSize: RFValue(14), color: WHITE },
 });
 
 export default withLoader(withSafeAreaInsets(CreateHabitWithoutHoc));
