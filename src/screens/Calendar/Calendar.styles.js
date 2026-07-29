@@ -14,7 +14,7 @@ const getStyles = (colors) => StyleSheet.create({
   },
   headerTitle: { fontFamily: BOLD, fontSize: RFValue(22), color: colors.text },
   todayBtn: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: `${colors.primary}18`,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -138,7 +138,7 @@ const getStyles = (colors) => StyleSheet.create({
     color: colors.surface,
   },
   customDayTextDisabled: {
-    color: '#D1D5DB', // light gray
+    color: colors.border,
   },
   customDayDot: {
     width: RFValue(4),
@@ -166,24 +166,19 @@ const getStyles = (colors) => StyleSheet.create({
     marginRight: 10,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    borderColor: colors.border,
   },
   chipSelected: {
-    backgroundColor: '#FDE047',
-    borderColor: '#FDE047',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   chipText: {
     fontFamily: SEMIBOLD,
     fontSize: RFValue(13),
-    color: colors.textSecondary,
+    color: colors.text,
   },
   chipTextSelected: {
-    color: colors.text,
+    color: colors.surface,
   },
 
   // Habit Card

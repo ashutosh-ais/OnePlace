@@ -1,13 +1,12 @@
-/* eslint-disable react-native/no-inline-styles */
-/* eslint-disable react/no-unstable-nested-components */
-import React, { useState } from 'react';
+import { useTheme } from '../../theme/useTheme';
+import React, { useState, useMemo } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSelector, useDispatch } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
-import { GRAY9, PRIMARY_OS } from '../../constants/color';
+import { GRAY9 } from '../../constants/color';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
 import {
   Activity,
@@ -28,7 +27,7 @@ import {
 } from 'lucide-react-native';
 import { logHabitCompletion, undoHabitCompletion } from '../../redux/Slice/HabitSlice';
 import withLoader from '../../hoc/withLoader';
-import styles from './Calendar.styles';
+import getStyles from './Calendar.styles';
 
 const ICON_MAP = {
   Activity,
@@ -83,6 +82,8 @@ const getHabitIconAndColor = (habit) => {
 };
 
 const CalendarWithoutHoc = ({ insets, navigation }) => {
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
   const [selectedDate, setSelectedDate] = useState(
     new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
   );
@@ -104,7 +105,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
         if (entry.status === 'completed') {
           const dateStr = entry.date.split('T')[0];
           if (!markedDates[dateStr]) {
-            markedDates[dateStr] = { marked: true, dotColor: PRIMARY_OS };
+            markedDates[dateStr] = { marked: true, dotColor: colors.primary };
           }
         }
       });
@@ -116,10 +117,10 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
     markedDates[selectedDate] = {
       ...markedDates[selectedDate],
       selected: true,
-      selectedColor: PRIMARY_OS,
+      selectedColor: colors.primary,
     };
   } else {
-    markedDates[selectedDate] = { selected: true, selectedColor: PRIMARY_OS };
+    markedDates[selectedDate] = { selected: true, selectedColor: colors.primary };
   }
 
   const isHabitScheduledForDate = (habit, dateStr) => {
@@ -167,7 +168,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
 
   return (
     <View style={[styles.container, mainContainerStyles]}>
-      <FocusAwareStatusBar barStyle="dark-content" backgroundColor="#F8F9FA" />
+      <FocusAwareStatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.background} />
 
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Timeline</Text>
@@ -211,7 +212,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
                     style={[
                       styles.customDayText,
                       isSelected && styles.customDayTextSelected,
-                      isToday && !isSelected && { color: PRIMARY_OS },
+                      isToday && !isSelected && { color: colors.primary },
                       isDisabled && styles.customDayTextDisabled,
                     ]}
                   >
@@ -229,8 +230,18 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
               );
             }}
             theme={{
-              todayTextColor: PRIMARY_OS,
-              arrowColor: PRIMARY_OS,
+              backgroundColor: colors.surface,
+              calendarBackground: colors.surface,
+              textSectionTitleColor: colors.textSecondary,
+              selectedDayBackgroundColor: colors.primary,
+              selectedDayTextColor: colors.surface,
+              todayTextColor: colors.primary,
+              dayTextColor: colors.text,
+              textDisabledColor: colors.border,
+              dotColor: colors.primary,
+              selectedDotColor: colors.surface,
+              arrowColor: colors.primary,
+              monthTextColor: colors.text,
               textDayFontFamily: REGULAR,
               textMonthFontFamily: BOLD,
               textDayHeaderFontFamily: SEMIBOLD,

@@ -34,12 +34,10 @@ import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTheme } from '../../theme/useTheme';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import {
-  BACKGROUND,
-  BLACK,
   GRAY9,
-  INPUT_BORDER,
   PRIMARY_OS,
   WHITE,
 } from '../../constants/color';
@@ -68,8 +66,306 @@ const isHabitScheduledForDate = (habit, dateStr) => {
   return true;
 };
 
+const getStyles = (colors) => StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: RFValue(20),
+    paddingTop: RFValue(10),
+    paddingBottom: RFValue(10),
+  },
+  greeting: { fontFamily: BOLD, fontSize: RFValue(20), color: colors.text },
+  phoneText: { fontFamily: SEMIBOLD, fontSize: RFValue(13), color: colors.primary, marginTop: RFValue(2) },
+  dateText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(12),
+    color: colors.textSecondary,
+    marginTop: RFValue(4),
+  },
+  profileBtn: {
+    width: RFValue(40),
+    height: RFValue(40),
+    borderRadius: RFValue(20),
+    backgroundColor: `${colors.primary}18`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Timeline Styles
+  timelineContainer: {
+    marginBottom: RFValue(15),
+  },
+  timelineScroll: {
+    paddingHorizontal: RFValue(20),
+  },
+  dateItem: {
+    alignItems: 'center',
+    marginRight: RFValue(15),
+  },
+  dayNameText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(12),
+    color: colors.textSecondary,
+    marginBottom: RFValue(8),
+  },
+  dayNameTextSelected: {
+    color: colors.text,
+    fontFamily: SEMIBOLD,
+  },
+  svgWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateNumWrapper: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateNumText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(14),
+    color: colors.text,
+  },
+  dateNumTextSelected: {
+    fontFamily: BOLD,
+  },
+
+  viewToggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: colors.border,
+    marginHorizontal: RFValue(20),
+    borderRadius: RFValue(12),
+    padding: RFValue(4),
+    marginBottom: RFValue(20),
+  },
+  toggleBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: RFValue(8),
+    borderRadius: RFValue(8),
+  },
+  toggleBtnActive: { backgroundColor: colors.primary },
+  toggleText: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(12),
+    color: colors.textSecondary,
+    marginLeft: RFValue(6),
+  },
+  toggleTextActive: { color: colors.surface },
+
+  scrollContent: {
+    paddingHorizontal: RFValue(20),
+    paddingBottom: RFValue(100),
+  },
+
+  // Agenda View
+  habitCard: {
+    backgroundColor: colors.surface,
+    borderRadius: RFValue(12),
+    padding: RFValue(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: RFValue(12),
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  habitMain: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  habitDetails: { marginLeft: RFValue(12), flex: 1 },
+  habitTitle: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(14),
+    color: colors.text,
+    marginBottom: RFValue(2),
+  },
+  habitTitleCompleted: { textDecorationLine: 'line-through', color: GRAY9 },
+  habitMeta: { fontFamily: REGULAR, fontSize: RFValue(11), color: GRAY9 },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: RFValue(8),
+    paddingVertical: RFValue(4),
+    borderRadius: RFValue(8),
+  },
+  streakText: {
+    fontFamily: BOLD,
+    fontSize: RFValue(11),
+    color: '#EF4444',
+    marginLeft: RFValue(4),
+  },
+
+  // List View
+  listCard: {
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: RFValue(12),
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  listContent: { flexDirection: 'row', alignItems: 'center' },
+  listTitle: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(13),
+    color: colors.text,
+    marginLeft: RFValue(10),
+  },
+  listStreakText: { fontFamily: BOLD, fontSize: RFValue(12), color: '#EF4444' },
+
+  // Grid View
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridCard: {
+    backgroundColor: colors.surface,
+    width: '48%',
+    borderRadius: RFValue(12),
+    padding: RFValue(14),
+    marginBottom: RFValue(12),
+    borderWidth: 1,
+    borderColor: colors.border,
+    justifyContent: 'space-between',
+  },
+  gridHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: RFValue(10),
+  },
+  gridTitle: {
+    fontFamily: BOLD,
+    fontSize: RFValue(13),
+    color: colors.text,
+    marginBottom: RFValue(15),
+    minHeight: RFValue(36),
+  },
+  gridStreak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: RFValue(6),
+    paddingVertical: RFValue(2),
+    borderRadius: RFValue(6),
+  },
+  gridStreakText: {
+    fontFamily: BOLD,
+    fontSize: RFValue(10),
+    color: '#EF4444',
+    marginLeft: RFValue(2),
+  },
+  miniHeatmapRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: RFValue(5),
+  },
+  miniBlock: {
+    width: RFValue(12),
+    height: RFValue(12),
+    borderRadius: RFValue(3),
+    backgroundColor: colors.border,
+  },
+
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: RFValue(40),
+  },
+  emptyText: {
+    fontFamily: REGULAR,
+    fontSize: RFValue(14),
+    color: colors.textSecondary,
+    marginTop: RFValue(12),
+    marginBottom: RFValue(16),
+  },
+  emptyBtn: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: RFValue(20),
+    paddingVertical: RFValue(10),
+    borderRadius: RFValue(8),
+  },
+  emptyBtnText: { color: colors.surface, fontFamily: SEMIBOLD, fontSize: RFValue(12) },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: RFValue(24),
+    borderTopRightRadius: RFValue(24),
+    padding: RFValue(20),
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: RFValue(8),
+  },
+  modalTitle: { fontFamily: BOLD, fontSize: RFValue(18), color: colors.text },
+  modalSubtitle: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(14),
+    color: colors.primary,
+    marginBottom: RFValue(24),
+  },
+  modalSection: { marginBottom: RFValue(20) },
+  modalLabel: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(14),
+    color: colors.text,
+    marginBottom: RFValue(8),
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: RFValue(12),
+    padding: RFValue(16),
+    fontFamily: REGULAR,
+    fontSize: RFValue(14),
+    color: colors.text,
+    backgroundColor: colors.background,
+  },
+  moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  moodBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: RFValue(12),
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: RFValue(12),
+    marginHorizontal: RFValue(4),
+    backgroundColor: colors.background,
+  },
+  moodBtnActive: { borderColor: colors.primary, backgroundColor: `${colors.primary}15` },
+  moodText: {
+    fontFamily: SEMIBOLD,
+    fontSize: RFValue(12),
+    color: colors.textSecondary,
+    marginTop: RFValue(4),
+  },
+  moodTextActive: { color: colors.primary },
+  saveBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: RFValue(12),
+    paddingVertical: RFValue(16),
+    alignItems: 'center',
+    marginTop: RFValue(10),
+    marginBottom: RFValue(20),
+  },
+  saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: colors.surface },
+});
+
 // Mini Heatmap Component for Grid View
-const MiniHeatmap = ({ history }) => {
+const MiniHeatmap = ({ history, styles, colors }) => {
   const getLocalISODate = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
   // Generate last 7 days array
@@ -89,7 +385,7 @@ const MiniHeatmap = ({ history }) => {
             key={i}
             style={[
               styles.miniBlock,
-              isCompleted ? { backgroundColor: PRIMARY_OS } : {},
+              isCompleted ? { backgroundColor: colors.primary } : {},
             ]}
           />
         );
@@ -98,7 +394,7 @@ const MiniHeatmap = ({ history }) => {
   );
 };
 
-const CircularProgressDate = ({ date, isSelected, progress, onPress }) => {
+const CircularProgressDate = ({ date, isSelected, progress, onPress, styles, colors }) => {
   const size = RFValue(44);
   const strokeWidth = 3;
   const radius = (size - strokeWidth) / 2;
@@ -112,16 +408,20 @@ const CircularProgressDate = ({ date, isSelected, progress, onPress }) => {
   return (
     <TouchableOpacity onPress={onPress} style={styles.dateItem}>
       <Text
-        style={[styles.dayNameText, isSelected && styles.dayNameTextSelected]}
+        style={[
+          styles.dayNameText,
+          { color: colors.textSecondary },
+          isSelected && { color: colors.primary, fontFamily: BOLD },
+        ]}
       >
         {dayName}
       </Text>
       <View style={styles.svgWrapper}>
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          {/* Track */}
+          {/* Background Fill & Track */}
           <SvgCircle
-            stroke="#E5E7EB"
-            fill="none"
+            stroke={colors.border}
+            fill={isSelected ? colors.primary : colors.surface}
             cx={size / 2}
             cy={size / 2}
             r={radius}
@@ -129,7 +429,7 @@ const CircularProgressDate = ({ date, isSelected, progress, onPress }) => {
           />
           {/* Progress */}
           <SvgCircle
-            stroke="#FDE047"
+            stroke={isSelected ? colors.surface : colors.primary}
             fill="none"
             cx={size / 2}
             cy={size / 2}
@@ -145,7 +445,8 @@ const CircularProgressDate = ({ date, isSelected, progress, onPress }) => {
           <Text
             style={[
               styles.dateNumText,
-              isSelected && styles.dateNumTextSelected,
+              { color: isSelected ? colors.surface : colors.text },
+              isSelected && { fontFamily: BOLD },
             ]}
           >
             {dateNum}
@@ -210,8 +511,18 @@ const getHabitIconAndColor = (habit) => {
 
 const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   const dispatch = useDispatch();
+  const { colors, isDark } = useTheme();
+  const styles = React.useMemo(() => getStyles(colors), [colors]);
   const { habits, loading, dashboardView } = useSelector(state => state.habits);
-  const { name } = useSelector(state => state.auth);
+  const { name, phone, phone_number } = useSelector(state => state.auth);
+  const userPhone = phone || phone_number;
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
   const [selectedDate, setSelectedDate] = useState(
     new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0],
@@ -265,7 +576,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
 
   const mainContainerStylesWithInsets = {
     flex: 1,
-    backgroundColor: BACKGROUND,
+    backgroundColor: colors.background,
     paddingTop: insets.top,
     paddingLeft: insets.left,
     paddingRight: insets.right,
@@ -327,15 +638,19 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
 
   return (
     <View style={mainContainerStylesWithInsets}>
-      <FocusAwareStatusBar
-        barStyle="dark-content"
-        backgroundColor={BACKGROUND}
-      />
+      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
 
       {/* Header Area */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Good Morning, {name || 'Alex'}</Text>
+        <View style={{ flex: 1, paddingRight: 10 }}>
+          <Text style={styles.greeting} numberOfLines={1}>
+            {getGreeting()}
+          </Text>
+          {userPhone ? (
+            <Text style={styles.phoneText} numberOfLines={1}>
+              {userPhone}
+            </Text>
+          ) : null}
           <Text style={styles.dateText}>
             {new Date(selectedDate).toLocaleDateString('en-US', {
               weekday: 'long',
@@ -344,8 +659,11 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
             })}
           </Text>
         </View>
-        <TouchableOpacity style={styles.profileBtn}>
-          <User color={PRIMARY_OS} size={RFValue(20)} />
+        <TouchableOpacity
+          style={styles.profileBtn}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <User color={colors.primary} size={RFValue(20)} />
         </TouchableOpacity>
       </View>
 
@@ -367,6 +685,8 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                 date={date}
                 isSelected={isSelected}
                 progress={progress}
+                styles={styles}
+                colors={colors}
                 onPress={() => setSelectedDate(dateStr)}
               />
             );
@@ -508,7 +828,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                       {habit.title}
                     </Text>
                     {/* Dynamic Mini-Heatmap */}
-                    <MiniHeatmap history={habit.history} />
+                    <MiniHeatmap history={habit.history} styles={styles} colors={colors} />
                   </TouchableOpacity>
                 );
               }
@@ -688,7 +1008,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                               marginLeft: RFValue(8),
                               fontFamily: REGULAR,
                               fontSize: RFValue(13),
-                              color: BLACK,
+                              color: colors.text,
                             }}
                           >
                             {chk.title}
@@ -791,302 +1111,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: RFValue(20),
-    paddingTop: RFValue(10),
-    paddingBottom: RFValue(10),
-  },
-  greeting: { fontFamily: BOLD, fontSize: RFValue(22), color: '#111827' },
-  dateText: {
-    fontFamily: REGULAR,
-    fontSize: RFValue(12),
-    color: GRAY9,
-    marginTop: RFValue(4),
-  },
-  profileBtn: {
-    width: RFValue(40),
-    height: RFValue(40),
-    borderRadius: RFValue(20),
-    backgroundColor: '#E0E7FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 
-  // Timeline Styles
-  timelineContainer: {
-    marginBottom: RFValue(15),
-  },
-  timelineScroll: {
-    paddingHorizontal: RFValue(20),
-  },
-  dateItem: {
-    alignItems: 'center',
-    marginRight: RFValue(15),
-  },
-  dayNameText: {
-    fontFamily: REGULAR,
-    fontSize: RFValue(12),
-    color: GRAY9,
-    marginBottom: RFValue(8),
-  },
-  dayNameTextSelected: {
-    color: BLACK,
-    fontFamily: SEMIBOLD,
-  },
-  svgWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dateNumWrapper: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dateNumText: {
-    fontFamily: REGULAR,
-    fontSize: RFValue(14),
-    color: BLACK,
-  },
-  dateNumTextSelected: {
-    fontFamily: BOLD,
-  },
-
-  viewToggleContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#F3F4F6',
-    marginHorizontal: RFValue(20),
-    borderRadius: RFValue(12),
-    padding: RFValue(4),
-    marginBottom: RFValue(20),
-  },
-  toggleBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: RFValue(8),
-    borderRadius: RFValue(8),
-  },
-  toggleBtnActive: { backgroundColor: PRIMARY_OS },
-  toggleText: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(12),
-    color: GRAY9,
-    marginLeft: RFValue(6),
-  },
-  toggleTextActive: { color: WHITE },
-
-  scrollContent: {
-    paddingHorizontal: RFValue(20),
-    paddingBottom: RFValue(100),
-  },
-
-  // Agenda View
-  habitCard: {
-    backgroundColor: WHITE,
-    borderRadius: RFValue(12),
-    padding: RFValue(16),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: RFValue(12),
-    borderWidth: 1,
-    borderColor: INPUT_BORDER,
-  },
-  habitMain: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  habitDetails: { marginLeft: RFValue(12), flex: 1 },
-  habitTitle: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(14),
-    color: '#111827',
-    marginBottom: RFValue(2),
-  },
-  habitTitleCompleted: { textDecorationLine: 'line-through', color: GRAY9 },
-  habitMeta: { fontFamily: REGULAR, fontSize: RFValue(11), color: GRAY9 },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    paddingHorizontal: RFValue(8),
-    paddingVertical: RFValue(4),
-    borderRadius: RFValue(8),
-  },
-  streakText: {
-    fontFamily: BOLD,
-    fontSize: RFValue(11),
-    color: '#EF4444',
-    marginLeft: RFValue(4),
-  },
-
-  // List View
-  listCard: {
-    backgroundColor: WHITE,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: RFValue(12),
-    borderBottomWidth: 1,
-    borderColor: INPUT_BORDER,
-  },
-  listContent: { flexDirection: 'row', alignItems: 'center' },
-  listTitle: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(13),
-    color: '#111827',
-    marginLeft: RFValue(10),
-  },
-  listStreakText: { fontFamily: BOLD, fontSize: RFValue(12), color: '#EF4444' },
-
-  // Grid View
-  gridContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  gridCard: {
-    backgroundColor: WHITE,
-    width: '48%',
-    borderRadius: RFValue(12),
-    padding: RFValue(14),
-    marginBottom: RFValue(12),
-    borderWidth: 1,
-    borderColor: INPUT_BORDER,
-    justifyContent: 'space-between',
-  },
-  gridHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: RFValue(10),
-  },
-  gridTitle: {
-    fontFamily: BOLD,
-    fontSize: RFValue(13),
-    color: BLACK,
-    marginBottom: RFValue(15),
-    minHeight: RFValue(36),
-  },
-  gridStreak: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
-    paddingHorizontal: RFValue(6),
-    paddingVertical: RFValue(2),
-    borderRadius: RFValue(6),
-  },
-  gridStreakText: {
-    fontFamily: BOLD,
-    fontSize: RFValue(10),
-    color: '#EF4444',
-    marginLeft: RFValue(2),
-  },
-  miniHeatmapRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: RFValue(5),
-  },
-  miniBlock: {
-    width: RFValue(12),
-    height: RFValue(12),
-    borderRadius: RFValue(3),
-    backgroundColor: '#F3F4F6',
-  },
-
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: RFValue(40),
-  },
-  emptyText: {
-    fontFamily: REGULAR,
-    fontSize: RFValue(14),
-    color: GRAY9,
-    marginTop: RFValue(12),
-    marginBottom: RFValue(16),
-  },
-  emptyBtn: {
-    backgroundColor: PRIMARY_OS,
-    paddingHorizontal: RFValue(20),
-    paddingVertical: RFValue(10),
-    borderRadius: RFValue(8),
-  },
-  emptyBtnText: { color: WHITE, fontFamily: SEMIBOLD, fontSize: RFValue(12) },
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: WHITE,
-    borderTopLeftRadius: RFValue(24),
-    borderTopRightRadius: RFValue(24),
-    padding: RFValue(20),
-    maxHeight: '80%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: RFValue(8),
-  },
-  modalTitle: { fontFamily: BOLD, fontSize: RFValue(18), color: '#111827' },
-  modalSubtitle: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(14),
-    color: PRIMARY_OS,
-    marginBottom: RFValue(24),
-  },
-  modalSection: { marginBottom: RFValue(20) },
-  modalLabel: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(14),
-    color: '#111827',
-    marginBottom: RFValue(8),
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: INPUT_BORDER,
-    borderRadius: RFValue(12),
-    padding: RFValue(16),
-    fontFamily: REGULAR,
-    fontSize: RFValue(14),
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
-  },
-  moodRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  moodBtn: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: RFValue(12),
-    borderWidth: 1,
-    borderColor: INPUT_BORDER,
-    borderRadius: RFValue(12),
-    marginHorizontal: RFValue(4),
-    backgroundColor: '#F9FAFB',
-  },
-  moodBtnActive: { borderColor: PRIMARY_OS, backgroundColor: '#EFF6FF' },
-  moodText: {
-    fontFamily: SEMIBOLD,
-    fontSize: RFValue(12),
-    color: GRAY9,
-    marginTop: RFValue(4),
-  },
-  moodTextActive: { color: PRIMARY_OS },
-  saveBtn: {
-    backgroundColor: PRIMARY_OS,
-    borderRadius: RFValue(12),
-    paddingVertical: RFValue(16),
-    alignItems: 'center',
-    marginTop: RFValue(10),
-    marginBottom: RFValue(20),
-  },
-  saveBtnText: { fontFamily: BOLD, fontSize: RFValue(14), color: WHITE },
-});
 
 const Dashboard = withLoader(withSafeAreaInsets(DashboardWithoutHoc));
 export default Dashboard;
