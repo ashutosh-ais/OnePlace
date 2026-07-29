@@ -1,96 +1,87 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../theme/useTheme';
-import React, { useState, useRef, useMemo, useEffect } from 'react';
 
 import {
+  Activity,
+  Apple,
+  ArrowLeft,
+  Bed,
+  Bike,
+  BookOpen,
+  Brain,
+  Briefcase,
+  Calculator,
+  Calendar as CalendarIcon,
+  Camera,
+  CheckCircle2,
+  ChefHat,
+  Code2,
+  Coffee,
+  Dog,
+  DollarSign,
+  Droplets,
+  Dumbbell,
+  Fish,
+  Flame,
+  Flower2,
+  Footprints,
+  Gamepad2,
+  Globe,
+  GraduationCap,
+  Handshake,
+  Headphones,
+  Heart,
+  Home,
+  Languages,
+  Leaf,
+  MessageSquare,
+  Moon,
+  Mountain,
+  Music,
+  Palette,
+  Pencil,
+  Pill,
+  Plane,
+  Salad,
+  ShoppingCart,
+  Smile,
+  Snowflake,
+  Star,
+  Sun,
+  Target,
+  Telescope,
+  Timer,
+  TreePine,
+  Trophy,
+  Tv,
+  Users,
+  Waves,
+  Wind,
+  X,
+  XCircle,
+  Zap,
+} from 'lucide-react-native';
+import {
+  ActivityIndicator,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  StyleSheet,
-  Dimensions,
-  ActivityIndicator,
 } from 'react-native';
+import ActionSheet from 'react-native-actions-sheet';
+import { Calendar } from 'react-native-calendars';
+import { RFValue } from 'react-native-responsive-fontsize';
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
-import withLoader from '../../hoc/withLoader';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  XCircle,
-  Snowflake,
-  MessageSquare,
-  Calendar as CalendarIcon,
-  X,
-  Pencil,
-  Activity,
-  Dumbbell,
-  BookOpen,
-  Coffee,
-  Moon,
-  Sun,
-  Heart,
-  Zap,
-  Music,
-  Camera,
-  Code2,
-  Briefcase,
-  Globe,
-  Leaf,
-  Star,
-  Trophy,
-  Flame,
-  Bike,
-  Brain,
-  Apple,
-  Droplets,
-  Bed,
-  Pill,
-  ShoppingCart,
-  Gamepad2,
-  Plane,
-  Home,
-  Flower2,
-  Fish,
-  ChefHat,
-  Timer,
-  Target,
-  Smile,
-  Handshake,
-  Languages,
-  Calculator,
-  Telescope,
-  Palette,
-  Headphones,
-  Tv,
-  Dog,
-  TreePine,
-  Mountain,
-  Wind,
-  Waves,
-  GraduationCap,
-  DollarSign,
-  Users,
-  Footprints,
-  Salad,
-} from 'lucide-react-native';
-import {
-  PRIMARY_OS,
-  WHITE,
-  GRAY9,
-  INPUT_BORDER,
-  BLACK} from '../../constants/color';
-import { RFValue } from 'react-native-responsive-fontsize';
+import { PRIMARY_OS } from '../../constants/color';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
-import { Calendar } from 'react-native-calendars';
+import withLoader from '../../hoc/withLoader';
 import {
   logHabitCompletion,
   undoHabitCompletion,
 } from '../../redux/Slice/HabitSlice';
-import ActionSheet from 'react-native-actions-sheet';
 import getStyles from './HabitDetail.styles';
-
-const { width: WIDTH } = Dimensions.get('window');
 
 const ICON_MAP = {
   Activity,
@@ -482,8 +473,5 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
     </View>
   );
 };
-
-const DAY_SIZE = Math.floor((WIDTH * 0.1) / 2) * 2;
-
 
 export default withLoader(withSafeAreaInsets(HabitDetailWithoutHoc));

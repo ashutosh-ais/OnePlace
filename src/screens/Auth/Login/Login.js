@@ -1,5 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
-import { useTheme } from '../../../theme/useTheme';
+import React, { useMemo, useState } from 'react';
 import {
   Keyboard,
   KeyboardAvoidingView,
@@ -13,6 +12,7 @@ import {
 import { withSafeAreaInsets } from 'react-native-safe-area-context';
 import FocusAwareStatusBar from '../../../components/FocusAwareStatusBar';
 import withLoader from '../../../hoc/withLoader';
+import { useTheme } from '../../../theme/useTheme';
 import getStyles from './Login.styles';
 
 const LoginWithoutHoc = ({ navigation, setLoading, insets }) => {
@@ -45,7 +45,10 @@ const LoginWithoutHoc = ({ navigation, setLoading, insets }) => {
       style={[styles.container, mainContainerStyles]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <FocusAwareStatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="#FFFFFF" />
+      <FocusAwareStatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor="#FFFFFF"
+      />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
