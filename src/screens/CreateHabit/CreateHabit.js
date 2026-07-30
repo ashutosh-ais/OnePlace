@@ -26,9 +26,9 @@ import {
 import { useTheme } from '../../theme/useTheme';
 const SCHEDULE_TYPES = [
   'Every Day',
-  'Specific Days',
-  'X Times / Period',
-  'Custom',
+  'Specific Days of Week',
+  'Specific Days of Month',
+  'Some Days per Period',
 ];
 const WEEK_DAYS = [
   { id: 'Mon', label: 'M' },
@@ -53,6 +53,9 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
 
   // Specific Days Engine
   const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedMonthDays, setSelectedMonthDays] = useState([]);
+  const [periodNumber, setPeriodNumber] = useState('1');
+  const [periodType, setPeriodType] = useState('Week'); // Week or Month
 
   // Rich Data Fields
   const [targetQuantity, setTargetQuantity] = useState('1');
@@ -95,6 +98,14 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
     }
   };
 
+  const toggleMonthDay = dayId => {
+    if (selectedMonthDays.includes(dayId)) {
+      setSelectedMonthDays(selectedMonthDays.filter(d => d !== dayId));
+    } else {
+      setSelectedMonthDays([...selectedMonthDays, dayId]);
+    }
+  };
+
   const handleCreate = async () => {
     if (!title.trim())
       return Alert.alert('Missing Field', 'Please enter a habit name.');
@@ -103,11 +114,21 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
         'Missing Field',
         'Please select at least one category.',
       );
-    if (scheduleType === 'Specific Days' && selectedDays.length === 0)
+    if (scheduleType === 'Specific Days of Week' && selectedDays.length === 0)
       return Alert.alert('Missing Field', 'Please select at least one day.');
+    if (scheduleType === 'Specific Days of Month' && selectedMonthDays.length === 0)
+      return Alert.alert('Missing Field', 'Please select at least one day in the month.');
+    if (scheduleType === 'Some Days per Period' && !periodNumber)
+      return Alert.alert('Missing Field', 'Please enter a valid number of days.');
 
-    const scheduleValue =
-      scheduleType === 'Specific Days' ? selectedDays.join(',') : '';
+    let scheduleValue = '';
+    if (scheduleType === 'Specific Days of Week') {
+      scheduleValue = selectedDays.join(',');
+    } else if (scheduleType === 'Specific Days of Month') {
+      scheduleValue = selectedMonthDays.join(',');
+    } else if (scheduleType === 'Some Days per Period') {
+      scheduleValue = `${periodNumber}/${periodType}`;
+    }
 
     setLoading(true);
     dispatch(
@@ -127,246 +148,328 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={[styles.container, mainContainerStyles]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+    <View style={[styles.container, mainContainerStyles]}>
       <FocusAwareStatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor="#FFFFFF"
       />
 
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <X color="#111827" size={RFValue(24)} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Habit</Text>
-        <TouchableOpacity onPress={handleCreate} style={styles.backBtn}>
-          <Check color={colors.primary} size={RFValue(24)} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
       >
-        {/* Name Input */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Habit Name</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Read 20 pages"
-            placeholderTextColor="#9CA3AF"
-            value={title}
-            onChangeText={setTitle}
-          />
-        </View>
-
-        {/* Categories Engine */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={styles.label}>Category</Text>
-            <TouchableOpacity onPress={() => actionSheetRef.current?.show()}>
-              <Text style={styles.addText}>+ New</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            horizontal
-            keyboardShouldPersistTaps="handled"
-            showsHorizontalScrollIndicator={false}
-            style={styles.catScroll}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
           >
-            {categories.map(cat => (
-              <TouchableOpacity
-                key={cat.id}
-                style={[
-                  styles.chip,
-                  selectedCategoryIds.includes(cat.id) && styles.chipActive,
-                ]}
-                onPress={() => toggleCategory(cat.id)}
-              >
-                <Text
-                  style={[
-                    styles.chipText,
-                    selectedCategoryIds.includes(cat.id) &&
-                      styles.chipTextActive,
-                  ]}
-                >
-                  {cat.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-            {categories.length === 0 && (
-              <Text style={styles.subLabel}>
-                No categories yet. Click "+ New" to add one.
-              </Text>
-            )}
-          </ScrollView>
+            <X color="#111827" size={RFValue(24)} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>New Habit</Text>
+          <TouchableOpacity onPress={handleCreate} style={styles.backBtn}>
+            <Check color={colors.primary} size={RFValue(24)} />
+          </TouchableOpacity>
         </View>
 
-        {/* Advanced Scheduling Engine */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Scheduling Engine</Text>
-          <View style={styles.scheduleGrid}>
-            {SCHEDULE_TYPES.map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.scheduleBtn,
-                  scheduleType === type && styles.scheduleBtnActive,
-                ]}
-                onPress={() => {
-                  setScheduleType(type);
-                  if (type !== 'Specific Days') setSelectedDays([]);
-                }}
-              >
-                <Text
-                  style={[
-                    styles.scheduleBtnText,
-                    scheduleType === type && styles.scheduleBtnTextActive,
-                  ]}
-                >
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom, 20) + RFValue(120) }]}
+        >
+          {/* Name Input */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Habit Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. Read 20 pages"
+              placeholderTextColor={colors.textSecondary}
+              value={title}
+              onChangeText={setTitle}
+            />
           </View>
 
-          {/* Specific Days Selector UI */}
-          {scheduleType === 'Specific Days' && (
-            <View style={styles.daysRow}>
-              {WEEK_DAYS.map(day => (
+          {/* Categories Engine */}
+          <View style={styles.section}>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Category</Text>
+              <TouchableOpacity onPress={() => actionSheetRef.current?.show()}>
+                <Text style={styles.addText}>+ New</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              keyboardShouldPersistTaps="handled"
+              showsHorizontalScrollIndicator={false}
+              style={styles.catScroll}
+            >
+              {categories.map(cat => (
                 <TouchableOpacity
-                  key={day.id}
+                  key={cat.id}
                   style={[
-                    styles.dayCircle,
-                    selectedDays.includes(day.id) && styles.dayCircleActive,
+                    styles.chip,
+                    selectedCategoryIds.includes(cat.id) && styles.chipActive,
                   ]}
-                  onPress={() => toggleDay(day.id)}
+                  onPress={() => toggleCategory(cat.id)}
                 >
                   <Text
                     style={[
-                      styles.dayText,
-                      selectedDays.includes(day.id) && styles.dayTextActive,
+                      styles.chipText,
+                      selectedCategoryIds.includes(cat.id) &&
+                        styles.chipTextActive,
                     ]}
                   >
-                    {day.label}
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              {categories.length === 0 && (
+                <Text style={styles.subLabel}>
+                  No categories yet. Click "+ New" to add one.
+                </Text>
+              )}
+            </ScrollView>
+          </View>
+
+          {/* Advanced Scheduling Engine */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Scheduling Engine</Text>
+            <View style={styles.scheduleGrid}>
+              {SCHEDULE_TYPES.map(type => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.scheduleBtn,
+                    scheduleType === type && styles.scheduleBtnActive,
+                  ]}
+                  onPress={() => {
+                    setScheduleType(type);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.scheduleBtnText,
+                      scheduleType === type && styles.scheduleBtnTextActive,
+                    ]}
+                  >
+                    {type}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
-          )}
-        </View>
 
-        {/* Metrics (Rich Data) */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Target Goal (Daily)</Text>
-          <View style={styles.row}>
-            <View style={{ flex: 1, marginRight: RFValue(10) }}>
-              <Text style={styles.subLabel}>Quantity</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="1"
-                keyboardType="numeric"
-                value={targetQuantity}
-                onChangeText={setTargetQuantity}
-              />
-            </View>
-            <View style={{ flex: 2 }}>
-              <Text style={styles.subLabel}>Unit (e.g., Litres, Pages)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Times"
-                value={unit}
-                onChangeText={setUnit}
-              />
+            {/* Specific Days of Week UI */}
+            {scheduleType === 'Specific Days of Week' && (
+              <View style={styles.daysRow}>
+                {WEEK_DAYS.map(day => (
+                  <TouchableOpacity
+                    key={day.id}
+                    style={[
+                      styles.dayCircle,
+                      selectedDays.includes(day.id) && styles.dayCircleActive,
+                    ]}
+                    onPress={() => toggleDay(day.id)}
+                  >
+                    <Text
+                      style={[
+                        styles.dayText,
+                        selectedDays.includes(day.id) && styles.dayTextActive,
+                      ]}
+                    >
+                      {day.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Specific Days of Month UI */}
+            {scheduleType === 'Specific Days of Month' && (
+              <View style={styles.monthDaysGrid}>
+                {Array.from({ length: 31 }, (_, i) => (i + 1).toString()).map(dayNum => (
+                  <TouchableOpacity
+                    key={dayNum}
+                    style={[
+                      styles.monthDayCircle,
+                      selectedMonthDays.includes(dayNum) && styles.dayCircleActive,
+                    ]}
+                    onPress={() => toggleMonthDay(dayNum)}
+                  >
+                    <Text
+                      style={[
+                        styles.dayText,
+                        selectedMonthDays.includes(dayNum) && styles.dayTextActive,
+                      ]}
+                    >
+                      {dayNum}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
+            {/* Some Days per Period UI */}
+            {scheduleType === 'Some Days per Period' && (
+              <View style={styles.periodRow}>
+                <View style={{ flex: 1, marginRight: RFValue(10) }}>
+                  <Text style={styles.subLabel}>Days</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="3"
+                    placeholderTextColor={colors.textSecondary}
+                    keyboardType="numeric"
+                    value={periodNumber}
+                    onChangeText={setPeriodNumber}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.subLabel}>Per</Text>
+                  <View style={styles.periodToggle}>
+                    <TouchableOpacity
+                      style={[
+                        styles.periodToggleBtn,
+                        periodType === 'Week' && styles.periodToggleBtnActive,
+                      ]}
+                      onPress={() => setPeriodType('Week')}
+                    >
+                      <Text
+                        style={[
+                          styles.periodToggleText,
+                          periodType === 'Week' && styles.periodToggleTextActive,
+                        ]}
+                      >
+                        Week
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.periodToggleBtn,
+                        periodType === 'Month' && styles.periodToggleBtnActive,
+                      ]}
+                      onPress={() => setPeriodType('Month')}
+                    >
+                      <Text
+                        style={[
+                          styles.periodToggleText,
+                          periodType === 'Month' && styles.periodToggleTextActive,
+                        ]}
+                      >
+                        Month
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Metrics (Rich Data) */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Target Goal (Daily)</Text>
+            <View style={styles.row}>
+              <View style={{ flex: 1, marginRight: RFValue(10) }}>
+                <Text style={styles.subLabel}>Quantity</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="1"
+                  keyboardType="numeric"
+                  value={targetQuantity}
+                  onChangeText={setTargetQuantity}
+                />
+              </View>
+              <View style={{ flex: 2 }}>
+                <Text style={styles.subLabel}>Unit (e.g., Litres, Pages)</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Times"
+                  value={unit}
+                  onChangeText={setUnit}
+                />
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Reminders */}
-        <View style={styles.section}>
-          <Text style={styles.label}>Daily Reminder</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. 08:00 AM (Optional)"
-            placeholderTextColor="#9CA3AF"
-            value={reminderTime}
-            onChangeText={setReminderTime}
-          />
-        </View>
-
-        {/* Checklists */}
-        <View style={styles.section}>
-          <View style={styles.labelRow}>
-            <Text style={styles.label}>Sub-tasks (Checklist)</Text>
+          {/* Reminders */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Daily Reminder</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 08:00 AM (Optional)"
+              placeholderTextColor={colors.textSecondary}
+              value={reminderTime}
+              onChangeText={setReminderTime}
+            />
           </View>
-          {checklists.map((item, index) => (
-            <View
-              key={index}
-              style={[styles.row, { marginBottom: RFValue(10) }]}
-            >
+
+          {/* Checklists */}
+          <View style={styles.section}>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Sub-tasks (Checklist)</Text>
+            </View>
+            {checklists.map((item, index) => (
               <View
-                style={[
-                  styles.dayCircle,
-                  {
-                    width: RFValue(24),
-                    height: RFValue(24),
-                    marginRight: RFValue(10),
-                  },
-                ]}
-              />
-              <TextInput
-                style={[styles.input, { flex: 1, padding: RFValue(10) }]}
-                placeholder={`Task ${index + 1}`}
-                value={item.title}
-                onChangeText={text => {
-                  const newChecklists = [...checklists];
-                  newChecklists[index].title = text;
-                  setChecklists(newChecklists);
-                }}
-              />
-              <TouchableOpacity
-                style={{ padding: RFValue(10) }}
-                onPress={() => {
-                  const newChecklists = checklists.filter(
-                    (_, i) => i !== index,
-                  );
-                  setChecklists(newChecklists);
-                }}
+                key={index}
+                style={[styles.row, { marginBottom: RFValue(10) }]}
               >
-                <X color={colors.textSecondary} size={RFValue(18)} />
-              </TouchableOpacity>
-            </View>
-          ))}
-          <TouchableOpacity
-            style={styles.addBtn}
-            onPress={() =>
-              setChecklists([...checklists, { title: '', isCompleted: false }])
-            }
-          >
-            <Plus color={colors.primary} size={RFValue(16)} />
-            <Text style={styles.addBtnText}>Add Step</Text>
+                <View
+                  style={[
+                    styles.dayCircle,
+                    {
+                      width: RFValue(24),
+                      height: RFValue(24),
+                      marginRight: RFValue(10),
+                    },
+                  ]}
+                />
+                <TextInput
+                  style={[styles.input, { flex: 1, padding: RFValue(10) }]}
+                  placeholder={`Task ${index + 1}`}
+                  placeholderTextColor={colors.textSecondary}
+                  value={item.title}
+                  onChangeText={text => {
+                    const newChecklists = [...checklists];
+                    newChecklists[index].title = text;
+                    setChecklists(newChecklists);
+                  }}
+                />
+                <TouchableOpacity
+                  style={{ padding: RFValue(10) }}
+                  onPress={() => {
+                    const newChecklists = checklists.filter(
+                      (_, i) => i !== index,
+                    );
+                    setChecklists(newChecklists);
+                  }}
+                >
+                  <X color={colors.textSecondary} size={RFValue(18)} />
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity
+              style={styles.addBtn}
+              onPress={() =>
+                setChecklists([...checklists, { title: '', isCompleted: false }])
+              }
+            >
+              <Plus color={colors.primary} size={RFValue(16)} />
+              <Text style={styles.addBtnText}>Add Step</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Save Button */}
+        <View
+          style={[
+            styles.bottomBar,
+            { paddingBottom: Math.max(insets.bottom, 20) },
+          ]}
+        >
+          <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}>
+            <Text style={styles.saveBtnText}>Create Habit</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
-
-      {/* Save Button */}
-      <View
-        style={[
-          styles.bottomBar,
-          { paddingBottom: Math.max(insets.bottom, 20) },
-        ]}
-      >
-        <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}>
-          <Text style={styles.saveBtnText}>Create Habit</Text>
-        </TouchableOpacity>
-      </View>
+      </KeyboardAvoidingView>
 
       <ActionSheet
         ref={actionSheetRef}
@@ -389,7 +492,7 @@ const CreateHabitWithoutHoc = ({ navigation, insets, setLoading }) => {
           </TouchableOpacity>
         </View>
       </ActionSheet>
-    </KeyboardAvoidingView>
+    </View>
   );
 };
 
@@ -531,6 +634,51 @@ const getStyles = colors =>
       color: colors.textSecondary,
     },
     dayTextActive: { color: colors.surface },
+    monthDaysGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: RFValue(8),
+      marginTop: RFValue(10),
+    },
+    monthDayCircle: {
+      width: RFValue(36),
+      height: RFValue(36),
+      borderRadius: RFValue(18),
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    periodRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: RFValue(10),
+    },
+    periodToggle: {
+      flexDirection: 'row',
+      backgroundColor: colors.background,
+      borderRadius: RFValue(12),
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    periodToggleBtn: {
+      flex: 1,
+      paddingVertical: RFValue(15),
+      alignItems: 'center',
+    },
+    periodToggleBtnActive: {
+      backgroundColor: colors.primary,
+    },
+    periodToggleText: {
+      fontFamily: SEMIBOLD,
+      fontSize: RFValue(12),
+      color: colors.textSecondary,
+    },
+    periodToggleTextActive: {
+      color: colors.surface,
+    },
     addBtn: {
       flexDirection: 'row',
       alignItems: 'center',

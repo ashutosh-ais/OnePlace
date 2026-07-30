@@ -38,29 +38,46 @@ import {
   logHabitCompletion,
   setDashboardView,
   undoHabitCompletion,
+  toggleSubtask,
 } from '../../redux/Slice/HabitSlice';
 import { getHabitIconAndColor } from '../../constants/icons';
 import { HEIGHT, WIDTH } from '../../constants/config';
 
 const isHabitScheduledForDate = (habit, dateStr) => {
-  if (habit.schedule_type === 'Every Day' || habit.scheduleType === 'Every Day')
-    return true;
+  const scheduleType = habit.schedule_type || habit.scheduleType;
+  const scheduleValue = habit.schedule_value || habit.scheduleValue || '';
+
+  // Every Day (or no schedule type set) — always show
+  if (!scheduleType || scheduleType === 'Every Day') return true;
+
+  // Parse the date string (YYYY-MM-DD) safely using UTC to avoid timezone shifts
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return true;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10) - 1;
+  const day = parseInt(parts[2], 10);
+  const d = new Date(Date.UTC(year, month, day));
+
+  // Specific Days of Week (legacy "Specific Days" and new "Specific Days of Week")
   if (
-    habit.schedule_type === 'Specific Days' ||
-    habit.scheduleType === 'Specific Days'
+    scheduleType === 'Specific Days' ||
+    scheduleType === 'Specific Days of Week'
   ) {
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1;
-      const day = parseInt(parts[2], 10);
-      const d = new Date(Date.UTC(year, month, day));
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const todayStr = days[d.getUTCDay()];
-      const val = habit.schedule_value || habit.scheduleValue || '';
-      return val.includes(todayStr);
-    }
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dayName = dayNames[d.getUTCDay()];
+    return scheduleValue.includes(dayName);
   }
+
+  // Specific Days of Month — show only on selected day numbers
+  if (scheduleType === 'Specific Days of Month') {
+    const dayOfMonth = d.getUTCDate().toString();
+    return scheduleValue.split(',').map(s => s.trim()).includes(dayOfMonth);
+  }
+
+  // Some Days per Period — always show (user decides day-by-day within the period)
+  if (scheduleType === 'Some Days per Period') return true;
+
+  // Default fallback — show
   return true;
 };
 
@@ -619,6 +636,54 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
     setActiveHabit(null);
   };
 
+  const handleToggleSubtask = (habit, subtaskIndex) => {
+    const currentCompleted =
+      habit.checklist_progress && habit.checklist_progress[selectedDate]
+        ? [...habit.checklist_progress[selectedDate]]
+        : [];
+
+    const wasCompleted = currentCompleted.includes(subtaskIndex);
+
+    // Build the optimistic next state BEFORE dispatching
+    let nextCompleted;
+    if (!wasCompleted) {
+      nextCompleted = [...currentCompleted, subtaskIndex];
+    } else {
+      nextCompleted = currentCompleted.filter(i => i !== subtaskIndex);
+    }
+
+    dispatch(
+      toggleSubtask({
+        habitId: habit.id,
+        dateStr: selectedDate,
+        subtaskIndex,
+        isCompleted: !wasCompleted,
+      }),
+    );
+
+    if (
+      habit.checklists &&
+      nextCompleted.length === habit.checklists.length &&
+      !habit.is_completed_on_date
+    ) {
+      // Pass a synthetic habit with the already-updated checklist_progress
+      // so the modal shows all items checked (avoids stale Redux state)
+      const habitWithUpdatedProgress = {
+        ...habit,
+        checklist_progress: {
+          ...(habit.checklist_progress || {}),
+          [selectedDate]: nextCompleted,
+        },
+      };
+      setTimeout(() => {
+        setActiveHabit(habitWithUpdatedProgress);
+        setMetric(habit.targetQuantity ? habit.targetQuantity.toString() : '1');
+        setMood('Good');
+        setNotes('');
+      }, 150);
+    }
+  };
+
   // Filter habits for the selected date
   const habitsForDate = habits.filter(h =>
     isHabitScheduledForDate(h, selectedDate),
@@ -968,13 +1033,23 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
               }
 
               // Default Agenda View
+              const hasChecklists = habit.checklists && habit.checklists.length > 0;
+              const completedSubtasks = habit.checklist_progress && habit.checklist_progress[selectedDate]
+                ? habit.checklist_progress[selectedDate]
+                : [];
+              const numCompleted = completedSubtasks.length;
+              const numTotal = hasChecklists ? habit.checklists.length : 0;
+
               return (
-                <TouchableOpacity
-                  key={habit.id}
-                  activeOpacity={0.8}
-                  onPress={() => navigation.navigate('HabitDetail', { habit })}
-                  style={styles.habitCard}
-                >
+                <View key={habit.id} style={{ marginBottom: HEIGHT * 0.01 }}>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => navigation.navigate('HabitDetail', { habit })}
+                    style={[
+                      styles.habitCard,
+                      hasChecklists ? { marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 0 } : {}
+                    ]}
+                  >
                   <View
                     style={{
                       flexDirection: 'row',
@@ -1007,10 +1082,11 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                         {habit.title}
                       </Text>
                       <Text style={styles.habitMeta} numberOfLines={1}>
-                        {habit.category_name || habit.category || 'Habit'}{' '}
+                        {habit.category_name || habit.category || 'Habit'}
                         {habit.target_quantity
-                          ? `• ${habit.target_quantity} ${habit.unit}`
+                          ? ` • ${habit.target_quantity} ${habit.unit}`
                           : ''}
+                        {hasChecklists ? ` • ${numCompleted}/${numTotal} Subtasks` : ''}
                       </Text>
                     </View>
                   </View>
@@ -1049,6 +1125,54 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
+
+                {hasChecklists && (
+                  <View style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    borderTopWidth: 0,
+                    borderBottomLeftRadius: WIDTH * 0.025,
+                    borderBottomRightRadius: WIDTH * 0.025,
+                    paddingHorizontal: WIDTH * 0.04,
+                    paddingBottom: WIDTH * 0.04,
+                    paddingTop: 5,
+                  }}>
+                    {habit.checklists.map((chk, i) => {
+                      const isChkCompleted = completedSubtasks.includes(i);
+                      return (
+                        <TouchableOpacity
+                          key={i}
+                          activeOpacity={0.7}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginTop: RFValue(8),
+                          }}
+                          onPress={() => handleToggleSubtask(habit, i)}
+                        >
+                          {isChkCompleted ? (
+                            <CheckCircle2 color={habitColor} size={RFValue(18)} />
+                          ) : (
+                            <Circle color={`${habitColor}60`} size={RFValue(18)} />
+                          )}
+                          <Text
+                            style={{
+                              marginLeft: RFValue(10),
+                              fontFamily: REGULAR,
+                              fontSize: RFValue(12),
+                              color: isChkCompleted ? GRAY9 : colors.text,
+                              textDecorationLine: isChkCompleted ? 'line-through' : 'none',
+                            }}
+                          >
+                            {chk.title}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
               );
             })}
           </View>
@@ -1075,35 +1199,42 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
               <ScrollView showsVerticalScrollIndicator={false}>
                 <Text style={styles.modalSubtitle}>{activeHabit.title}</Text>
 
-                {/* Sub-tasks Checklist execution */}
+                {/* Sub-tasks in modal are now just informational or can be interacted with, but main interaction is inline */}
                 {activeHabit.checklists &&
                   activeHabit.checklists.length > 0 && (
                     <View style={styles.modalSection}>
                       <Text style={styles.modalLabel}>
-                        Checklist (Optional for now)
+                        Checklist
                       </Text>
-                      {activeHabit.checklists.map((chk, i) => (
-                        <View
-                          key={i}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            marginBottom: RFValue(8),
-                          }}
-                        >
-                          <Circle color={GRAY9} size={RFValue(18)} />
-                          <Text
+                      {activeHabit.checklists.map((chk, i) => {
+                        const isChkCompleted = activeHabit.checklist_progress && activeHabit.checklist_progress[selectedDate] && activeHabit.checklist_progress[selectedDate].includes(i);
+                        return (
+                          <View
+                            key={i}
                             style={{
-                              marginLeft: RFValue(8),
-                              fontFamily: REGULAR,
-                              fontSize: RFValue(13),
-                              color: colors.text,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              marginBottom: RFValue(8),
                             }}
                           >
-                            {chk.title}
-                          </Text>
-                        </View>
-                      ))}
+                            {isChkCompleted ? (
+                              <CheckCircle2 color={getHabitIconAndColor(activeHabit).habitColor} size={RFValue(18)} />
+                            ) : (
+                              <Circle color={GRAY9} size={RFValue(18)} />
+                            )}
+                            <Text
+                              style={{
+                                marginLeft: RFValue(8),
+                                fontFamily: REGULAR,
+                                fontSize: RFValue(13),
+                                color: colors.text,
+                              }}
+                            >
+                              {chk.title}
+                            </Text>
+                          </View>
+                        );
+                      })}
                     </View>
                   )}
 

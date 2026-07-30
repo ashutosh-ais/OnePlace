@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import React, { useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../theme/useTheme';
 
@@ -82,9 +83,9 @@ import { createNewCategory, editHabit } from '../../redux/Slice/HabitSlice';
 
 const SCHEDULE_TYPES = [
   'Every Day',
-  'Specific Days',
-  'X Times / Period',
-  'Custom',
+  'Specific Days of Week',
+  'Specific Days of Month',
+  'Some Days per Period',
 ];
 const WEEK_DAYS = [
   { id: 'Mon', label: 'M' },
@@ -195,10 +196,32 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
   // Form state — seeded from existing habit
   const [title, setTitle] = useState(habit.title || '');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState(initialCatIds);
-  const [scheduleType, setScheduleType] = useState(
-    habit.schedule_type || 'Every Day',
+  // Handle legacy schedule types if needed
+  const normalizedScheduleType =
+    habit.schedule_type === 'Specific Days'
+      ? 'Specific Days of Week'
+      : habit.schedule_type || 'Every Day';
+
+  const [scheduleType, setScheduleType] = useState(normalizedScheduleType);
+
+  const isMonth = normalizedScheduleType === 'Specific Days of Month';
+  const isPeriod = normalizedScheduleType === 'Some Days per Period';
+
+  const [selectedDays, setSelectedDays] = useState(
+    !isMonth && !isPeriod ? initialDays : [],
   );
-  const [selectedDays, setSelectedDays] = useState(initialDays);
+
+  const [selectedMonthDays, setSelectedMonthDays] = useState(
+    isMonth ? initialDays : [],
+  );
+
+  const initialPeriodParts =
+    isPeriod && habit.schedule_value
+      ? habit.schedule_value.split('/')
+      : ['1', 'Week'];
+
+  const [periodNumber, setPeriodNumber] = useState(initialPeriodParts[0]);
+  const [periodType, setPeriodType] = useState(initialPeriodParts[1] || 'Week');
   const [targetQuantity, setTargetQuantity] = useState(
     String(habit.target_quantity || habit.targetQuantity || '1'),
   );
@@ -234,6 +257,12 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
     );
   };
 
+  const toggleMonthDay = dayId => {
+    setSelectedMonthDays(prev =>
+      prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId],
+    );
+  };
+
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) {
       return;
@@ -255,8 +284,32 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
         'Please select at least one category.',
       );
     }
-    if (scheduleType === 'Specific Days' && selectedDays.length === 0) {
+    if (scheduleType === 'Specific Days of Week' && selectedDays.length === 0) {
       return Alert.alert('Missing Field', 'Please select at least one day.');
+    }
+    if (
+      scheduleType === 'Specific Days of Month' &&
+      selectedMonthDays.length === 0
+    ) {
+      return Alert.alert(
+        'Missing Field',
+        'Please select at least one day in the month.',
+      );
+    }
+    if (scheduleType === 'Some Days per Period' && !periodNumber) {
+      return Alert.alert(
+        'Missing Field',
+        'Please enter a valid number of days.',
+      );
+    }
+
+    let scheduleValue = '';
+    if (scheduleType === 'Specific Days of Week') {
+      scheduleValue = selectedDays.join(',');
+    } else if (scheduleType === 'Specific Days of Month') {
+      scheduleValue = selectedMonthDays.join(',');
+    } else if (scheduleType === 'Some Days per Period') {
+      scheduleValue = `${periodNumber}/${periodType}`;
     }
 
     setLoading(true);
@@ -267,8 +320,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           title: title.trim(),
           category_id: JSON.stringify(selectedCategoryIds),
           schedule_type: scheduleType,
-          schedule_value:
-            scheduleType === 'Specific Days' ? selectedDays.join(',') : '',
+          schedule_value: scheduleValue,
           target_quantity: parseInt(targetQuantity, 10) || 1,
           unit,
           reminder_time: reminderTime,
@@ -291,6 +343,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
     <KeyboardAvoidingView
       style={[styles.container, mainContainerStyles]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
       <FocusAwareStatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
@@ -319,7 +372,10 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Math.max(insets.bottom, 20) + RFValue(120) },
+        ]}
       >
         {/* ── Name ─────────────────────────────────────────────────────── */}
         <View style={styles.section}>
@@ -327,7 +383,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           <TextInput
             style={styles.input}
             placeholder="e.g. Read 20 pages"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
             value={title}
             onChangeText={setTitle}
           />
@@ -453,9 +509,6 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                 ]}
                 onPress={() => {
                   setScheduleType(type);
-                  if (type !== 'Specific Days') {
-                    setSelectedDays([]);
-                  }
                 }}
               >
                 <Text
@@ -472,7 +525,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
               </TouchableOpacity>
             ))}
           </View>
-          {scheduleType === 'Specific Days' && (
+          {scheduleType === 'Specific Days of Week' && (
             <View style={styles.daysRow}>
               {WEEK_DAYS.map(day => (
                 <TouchableOpacity
@@ -496,6 +549,93 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          )}
+
+          {scheduleType === 'Specific Days of Month' && (
+            <View style={styles.monthDaysGrid}>
+              {Array.from({ length: 31 }, (_, i) => (i + 1).toString()).map(
+                dayNum => (
+                  <TouchableOpacity
+                    key={dayNum}
+                    style={[
+                      styles.monthDayCircle,
+                      selectedMonthDays.includes(dayNum) && {
+                        backgroundColor: selectedColor,
+                        borderColor: selectedColor,
+                      },
+                    ]}
+                    onPress={() => toggleMonthDay(dayNum)}
+                  >
+                    <Text
+                      style={[
+                        styles.dayText,
+                        selectedMonthDays.includes(dayNum) &&
+                          styles.dayTextActive,
+                      ]}
+                    >
+                      {dayNum}
+                    </Text>
+                  </TouchableOpacity>
+                ),
+              )}
+            </View>
+          )}
+
+          {scheduleType === 'Some Days per Period' && (
+            <View style={styles.periodRow}>
+              <View style={{ flex: 1, marginRight: RFValue(10) }}>
+                <Text style={styles.subLabel}>Days</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="3"
+                  placeholderTextColor={colors.textSecondary}
+                  keyboardType="numeric"
+                  value={periodNumber}
+                  onChangeText={setPeriodNumber}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.subLabel}>Per</Text>
+                <View style={styles.periodToggle}>
+                  <TouchableOpacity
+                    style={[
+                      styles.periodToggleBtn,
+                      periodType === 'Week' && {
+                        backgroundColor: selectedColor,
+                      },
+                    ]}
+                    onPress={() => setPeriodType('Week')}
+                  >
+                    <Text
+                      style={[
+                        styles.periodToggleText,
+                        periodType === 'Week' && styles.periodToggleTextActive,
+                      ]}
+                    >
+                      Week
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.periodToggleBtn,
+                      periodType === 'Month' && {
+                        backgroundColor: selectedColor,
+                      },
+                    ]}
+                    onPress={() => setPeriodType('Month')}
+                  >
+                    <Text
+                      style={[
+                        styles.periodToggleText,
+                        periodType === 'Month' && styles.periodToggleTextActive,
+                      ]}
+                    >
+                      Month
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
           )}
         </View>
@@ -532,7 +672,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           <TextInput
             style={styles.input}
             placeholder="e.g. 08:00 AM (Optional)"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
             value={reminderTime}
             onChangeText={setReminderTime}
           />
@@ -552,6 +692,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
               <TextInput
                 style={[styles.input, styles.checklistInput]}
                 placeholder={`Task ${index + 1}`}
+                placeholderTextColor={colors.textSecondary}
                 value={item.title}
                 onChangeText={text => {
                   const next = [...checklists];
@@ -796,6 +937,53 @@ const getStyles = colors =>
       color: colors.textSecondary,
     },
     dayTextActive: { color: colors.surface },
+    monthDaysGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: RFValue(8),
+      marginTop: RFValue(12),
+      paddingHorizontal: RFValue(4),
+    },
+    monthDayCircle: {
+      width: RFValue(36),
+      height: RFValue(36),
+      borderRadius: RFValue(18),
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.background,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    periodRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: RFValue(12),
+      paddingHorizontal: RFValue(4),
+    },
+    periodToggle: {
+      flexDirection: 'row',
+      backgroundColor: colors.background,
+      borderRadius: RFValue(12),
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    periodToggleBtn: {
+      flex: 1,
+      paddingVertical: RFValue(15),
+      alignItems: 'center',
+    },
+    periodToggleBtnActive: {
+      backgroundColor: colors.primary, // Note: In EditHabit this will be overridden by inline styles
+    },
+    periodToggleText: {
+      fontFamily: SEMIBOLD,
+      fontSize: RFValue(12),
+      color: colors.textSecondary,
+    },
+    periodToggleTextActive: {
+      color: colors.surface,
+    },
 
     // Checklist
     checklistRow: {

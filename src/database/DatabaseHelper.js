@@ -62,12 +62,23 @@ export const createTables = async db => {
       FOREIGN KEY (habit_id) REFERENCES Habits (id)
     );
   `;
+  const checklistProgressTable = `
+    CREATE TABLE IF NOT EXISTS ChecklistProgress (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      habit_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      completed_indices TEXT NOT NULL,
+      FOREIGN KEY (habit_id) REFERENCES Habits (id),
+      UNIQUE(habit_id, date)
+    );
+  `;
 
   try {
     await db.executeSql(userTable);
     await db.executeSql(categoryTable);
     await db.executeSql(habitTable);
     await db.executeSql(completionTable);
+    await db.executeSql(checklistProgressTable);
 
     // ── Schema Migrations ──────────────────────────────────────────────────
     // ALTER TABLE is safe to run repeatedly — we catch errors if the
@@ -265,6 +276,19 @@ export const getHabits = async (db, userId) => {
       allCompletions[row.habit_id].push({ ...row, status: 'completed' });
     }
 
+    const checklistRes = await db.executeSql(
+      `SELECT habit_id, date, completed_indices FROM ChecklistProgress WHERE habit_id IN (SELECT id FROM Habits WHERE user_id = ?)`,
+      [userId],
+    );
+    const allChecklistProgress = {};
+    for (let i = 0; i < checklistRes[0].rows.length; i++) {
+      const row = checklistRes[0].rows.item(i);
+      if (!allChecklistProgress[row.habit_id]) {
+        allChecklistProgress[row.habit_id] = {};
+      }
+      allChecklistProgress[row.habit_id][row.date] = JSON.parse(row.completed_indices || '[]');
+    }
+
     const d = new Date();
     const todayStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
       .toISOString()
@@ -290,6 +314,7 @@ export const getHabits = async (db, userId) => {
           .join(', ');
 
         item.checklists = item.checklists ? JSON.parse(item.checklists) : [];
+        item.checklist_progress = allChecklistProgress[item.id] || {};
         item.history = allCompletions[item.id] || [];
         item.completed_today = item.history.some(h =>
           h.date.startsWith(todayStr),
@@ -356,6 +381,13 @@ export const updateHabit = async (db, habitId, fields) => {
       `UPDATE Habits SET ${setClauses} WHERE id = ?`,
       values,
     );
+
+    // Recalculate streak whenever schedule changes, as existing history
+    // needs to be re-evaluated against the new schedule type/value.
+    const scheduleChanged = keys.includes('schedule_type') || keys.includes('schedule_value');
+    if (scheduleChanged) {
+      await recalculateStreak(db, habitId);
+    }
   } catch (error) {
     console.error('Update Habit Error:', error);
     throw error;
@@ -396,11 +428,24 @@ export const recalculateStreak = async (db, habitId) => {
       const dayName = days[d.getDay()];
 
       let isRequired = true;
-      if (habit.schedule_type === 'Specific Days') {
+      // Original: Specific Days (legacy) and new Specific Days of Week
+      if (
+        habit.schedule_type === 'Specific Days' ||
+        habit.schedule_type === 'Specific Days of Week'
+      ) {
         const val = habit.schedule_value || '';
         if (!val.includes(dayName)) {
           isRequired = false;
         }
+      } else if (habit.schedule_type === 'Specific Days of Month') {
+        const val = habit.schedule_value || '';
+        const dayOfMonth = d.getDate().toString();
+        if (!val.split(',').includes(dayOfMonth)) {
+          isRequired = false;
+        }
+      } else if (habit.schedule_type === 'Some Days per Period') {
+        // For period habits, only days with actual completions count
+        isRequired = completedDates.has(dateStr);
       }
 
       if (isRequired) {
@@ -513,9 +558,51 @@ export const deleteHabit = async (db, habitId) => {
     await db.executeSql(`DELETE FROM Completions WHERE habit_id = ?`, [
       habitId,
     ]);
+    await db.executeSql(`DELETE FROM ChecklistProgress WHERE habit_id = ?`, [
+      habitId,
+    ]);
     await db.executeSql(`DELETE FROM Habits WHERE id = ?`, [habitId]);
   } catch (error) {
     console.error('Delete Habit Error:', error);
+    throw error;
+  }
+};
+
+export const toggleSubtaskCompletion = async (db, habitId, dateStr, subtaskIndex, isCompleted) => {
+  try {
+    const res = await db.executeSql(
+      `SELECT completed_indices FROM ChecklistProgress WHERE habit_id = ? AND date = ?`,
+      [habitId, dateStr]
+    );
+
+    let completedIndices = [];
+    if (res[0].rows.length > 0) {
+      completedIndices = JSON.parse(res[0].rows.item(0).completed_indices || '[]');
+    }
+
+    if (isCompleted) {
+      if (!completedIndices.includes(subtaskIndex)) {
+        completedIndices.push(subtaskIndex);
+      }
+    } else {
+      completedIndices = completedIndices.filter(i => i !== subtaskIndex);
+    }
+
+    const indicesStr = JSON.stringify(completedIndices);
+
+    if (res[0].rows.length > 0) {
+      await db.executeSql(
+        `UPDATE ChecklistProgress SET completed_indices = ? WHERE habit_id = ? AND date = ?`,
+        [indicesStr, habitId, dateStr]
+      );
+    } else {
+      await db.executeSql(
+        `INSERT INTO ChecklistProgress (habit_id, date, completed_indices) VALUES (?, ?, ?)`,
+        [habitId, dateStr, indicesStr]
+      );
+    }
+  } catch (error) {
+    console.error('Toggle Subtask Completion Error:', error);
     throw error;
   }
 };
