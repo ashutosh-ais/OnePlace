@@ -302,6 +302,12 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
         'Please enter a valid number of days.',
       );
     }
+    if (scheduleType === 'Some Days per Period' && periodType === 'Week' && parseInt(periodNumber, 10) > 6) {
+      return Alert.alert('Invalid Value', 'Please enter less than 7 days per week.');
+    }
+    if (scheduleType === 'Some Days per Period' && periodType === 'Month' && parseInt(periodNumber, 10) > 27) {
+      return Alert.alert('Invalid Value', 'Please enter less than 28 days per month.');
+    }
 
     let scheduleValue = '';
     if (scheduleType === 'Specific Days of Week') {
@@ -749,7 +755,7 @@ const EditHabitWithoutHoc = ({ navigation, route, insets, setLoading }) => {
           <TextInput
             style={styles.actionSheetInput}
             placeholder="Category Name"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
             value={newCategoryName}
             onChangeText={setNewCategoryName}
           />
@@ -1039,6 +1045,7 @@ const getStyles = colors =>
       borderTopLeftRadius: RFValue(24),
       borderTopRightRadius: RFValue(24),
       paddingBottom: RFValue(30),
+      backgroundColor: colors.surface,
     },
     actionSheetContent: { padding: RFValue(20) },
     actionSheetTitle: {

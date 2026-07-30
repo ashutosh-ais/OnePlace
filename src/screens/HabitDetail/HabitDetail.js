@@ -286,40 +286,57 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                 {habit.unit}
               </Text>
 
-              <View style={styles.scheduleVisualContainer}>
-                {(habit.schedule_type === 'Specific Days of Week' ||
-                  habit.schedule_type === 'Specific Days') &&
-                  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => {
-                    const isActive = (habit.schedule_value || '').includes(day);
-                    return (
-                      <View
-                        key={day}
-                        style={[
-                          styles.scheduleDayCircle,
-                          isActive && {
-                            backgroundColor: habitColor,
-                            borderColor: habitColor,
-                          },
-                        ]}
-                      >
-                        <Text
+              {/* Specific Days of Week — fixed 7 circles, no scroll needed */}
+              {(habit.schedule_type === 'Specific Days of Week' ||
+                habit.schedule_type === 'Specific Days') && (
+                <View style={styles.scheduleVisualContainer}>
+                  {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                    day => {
+                      const isActive = (habit.schedule_value || '').includes(
+                        day,
+                      );
+                      return (
+                        <View
+                          key={day}
                           style={[
-                            styles.scheduleDayText,
-                            isActive && styles.scheduleDayActiveText,
+                            styles.scheduleDayCircle,
+                            isActive && {
+                              backgroundColor: habitColor,
+                              borderColor: habitColor,
+                            },
                           ]}
                         >
-                          {day[0]}
-                        </Text>
-                      </View>
-                    );
-                  })}
+                          <Text
+                            style={[
+                              styles.scheduleDayText,
+                              isActive && styles.scheduleDayActiveText,
+                            ]}
+                          >
+                            {day[0]}
+                          </Text>
+                        </View>
+                      );
+                    },
+                  )}
+                </View>
+              )}
 
-                {habit.schedule_type === 'Specific Days of Month' &&
-                  (habit.schedule_value || '')
+              {/* Specific Days of Month — horizontally scrollable row */}
+              {habit.schedule_type === 'Specific Days of Month' && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{
+                    flexDirection: 'row',
+                    gap: RFValue(8),
+                    paddingHorizontal: RFValue(4),
+                    paddingVertical: RFValue(12),
+                  }}
+                >
+                  {(habit.schedule_value || '')
                     .split(',')
                     .map(d => d.trim())
-                    .slice(0, 7)
-                    .map((dayNum, i, arr) => (
+                    .map(dayNum => (
                       <View
                         key={dayNum}
                         style={[
@@ -338,29 +355,21 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                         >
                           {dayNum}
                         </Text>
-                        {i === 6 &&
-                          arr.length <
-                            (habit.schedule_value || '').split(',').length && (
-                            <Text
-                              style={[
-                                styles.scheduleDayText,
-                                { marginLeft: 4 },
-                              ]}
-                            >
-                              +
-                            </Text>
-                          )}
                       </View>
                     ))}
+                </ScrollView>
+              )}
 
-                {habit.schedule_type === 'Some Days per Period' && (
+              {/* Some Days per Period — pill badge */}
+              {habit.schedule_type === 'Some Days per Period' && (
+                <View style={[styles.scheduleVisualContainer, { marginTop: RFValue(8) }]}>
                   <View style={styles.schedulePeriodBadge}>
                     <Text style={styles.schedulePeriodText}>
-                      {(habit.schedule_value || '').replace('/', ' times / ')}
+                      {(habit.schedule_value || '').replace('/', ' days / ')}
                     </Text>
                   </View>
-                )}
-              </View>
+                </View>
+              )}
             </>
           )}
         </View>
