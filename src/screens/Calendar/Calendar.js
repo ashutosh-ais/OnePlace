@@ -73,27 +73,40 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
   }
 
   const isHabitScheduledForDate = (habit, dateStr) => {
+    const scheduleType = habit.schedule_type || habit.scheduleType;
+    const scheduleValue = habit.schedule_value || habit.scheduleValue || '';
+
+    // Every Day (or no schedule type set) — always show
+    if (!scheduleType || scheduleType === 'Every Day') return true;
+
+    // Parse the date string (YYYY-MM-DD) safely using UTC to avoid timezone shifts
+    const parts = dateStr.split('-');
+    if (parts.length !== 3) return true;
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(Date.UTC(year, month, day));
+
+    // Specific Days of Week (legacy "Specific Days" and new "Specific Days of Week")
     if (
-      habit.schedule_type === 'Every Day' ||
-      habit.scheduleType === 'Every Day'
-    )
-      return true;
-    if (
-      habit.schedule_type === 'Specific Days' ||
-      habit.scheduleType === 'Specific Days'
+      scheduleType === 'Specific Days' ||
+      scheduleType === 'Specific Days of Week'
     ) {
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
-        const d = new Date(Date.UTC(year, month, day));
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const dayStr = days[d.getUTCDay()];
-        const val = habit.schedule_value || habit.scheduleValue || '';
-        return val.includes(dayStr);
-      }
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const dayName = dayNames[d.getUTCDay()];
+      return scheduleValue.includes(dayName);
     }
+
+    // Specific Days of Month — show only on selected day numbers
+    if (scheduleType === 'Specific Days of Month') {
+      const dayOfMonth = d.getUTCDate().toString();
+      return scheduleValue.split(',').map(s => s.trim()).includes(dayOfMonth);
+    }
+
+    // Some Days per Period — always show (user decides day-by-day within the period)
+    if (scheduleType === 'Some Days per Period') return true;
+
+    // Default fallback — show
     return true;
   };
 
