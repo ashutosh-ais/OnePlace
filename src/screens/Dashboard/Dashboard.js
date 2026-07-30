@@ -866,7 +866,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                     key={habit.id}
                     activeOpacity={0.8}
                     onPress={() =>
-                      navigation.navigate('HabitDetail', { habit })
+                      navigation.navigate('HabitDetail', { habit, selectedDate })
                     }
                     style={styles.gridCard}
                   >
@@ -950,7 +950,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                     key={habit.id}
                     activeOpacity={0.8}
                     onPress={() =>
-                      navigation.navigate('HabitDetail', { habit })
+                      navigation.navigate('HabitDetail', { habit, selectedDate })
                     }
                     style={styles.listCard}
                   >
@@ -1044,7 +1044,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
                 <View key={habit.id} style={{ marginBottom: HEIGHT * 0.01 }}>
                   <TouchableOpacity
                     activeOpacity={0.8}
-                    onPress={() => navigation.navigate('HabitDetail', { habit })}
+                    onPress={() => navigation.navigate('HabitDetail', { habit, selectedDate })}
                     style={[
                       styles.habitCard,
                       hasChecklists ? { marginBottom: 0, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 0 } : {}

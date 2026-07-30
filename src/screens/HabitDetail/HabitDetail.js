@@ -1,3 +1,5 @@
+/* eslint-disable react-native/no-inline-styles */
+/* eslint-disable no-shadow */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from '../../theme/useTheme';
 
@@ -18,6 +20,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  TextInput,
 } from 'react-native';
 import ActionSheet from 'react-native-actions-sheet';
 import { Calendar } from 'react-native-calendars';
@@ -27,10 +30,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import FocusAwareStatusBar from '../../components/FocusAwareStatusBar';
 import { PRIMARY_OS } from '../../constants/color';
 import { BOLD, REGULAR, SEMIBOLD } from '../../constants/fontfamily';
+import { Circle, Flame } from 'lucide-react-native';
 import withLoader from '../../hoc/withLoader';
 import {
   logHabitCompletion,
   undoHabitCompletion,
+  toggleSubtask,
 } from '../../redux/Slice/HabitSlice';
 import { ICON_MAP } from '../../constants/icons';
 import getStyles from './HabitDetail.styles';
@@ -43,7 +48,36 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
   const { habits } = useSelector(state => state.habits);
   const habit = habits.find(h => h.id === routeHabit.id) || routeHabit;
   const actionSheetRef = useRef(null);
+  const completeActionSheetRef = useRef(null);
   const [isBackfilling, setIsBackfilling] = useState(false);
+
+  // States for completion modal
+  const [metric, setMetric] = useState(
+    habit?.target_quantity?.toString() || '1',
+  );
+  const [mood, setMood] = useState('Good');
+  const [notes, setNotes] = useState('');
+  const [isCompleting, setIsCompleting] = useState(false);
+
+  // Use the date passed from Dashboard; fall back to today if opened directly
+  const todayStr = new Date(
+    new Date().getTime() - new Date().getTimezoneOffset() * 60000,
+  )
+    .toISOString()
+    .split('T')[0];
+  const selectedDate = route.params?.selectedDate || todayStr;
+  const isToday = selectedDate === todayStr;
+
+  // Human-readable label for the selected date
+  const selectedDateLabel = isToday
+    ? 'Today'
+    : new Date(
+        selectedDate + 'T00:00:00', // force local parse
+      ).toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
 
   // Habit theming
   const habitColor = habit?.color || PRIMARY_OS;
@@ -188,7 +222,17 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
         >
           <ArrowLeft color={colors.text} size={RFValue(24)} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Habit Detail</Text>
+        <View style={{ flex: 1, alignItems: 'center' }}>
+          <Text style={styles.headerTitle}>Habit Detail</Text>
+          <Text
+            style={[
+              styles.scheduleText,
+              { marginTop: RFValue(2), fontSize: RFValue(11) },
+            ]}
+          >
+            {selectedDateLabel}
+          </Text>
+        </View>
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => navigation.navigate('EditHabit', { habit })}
@@ -228,10 +272,97 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
             </Text>
           </View>
           <Text style={styles.habitTitle}>{habit.title}</Text>
-          <Text style={styles.scheduleText}>
-            {habit.schedule_type || habit.scheduleType} • Target:{' '}
-            {habit.target_quantity || habit.targetQuantity} {habit.unit}
-          </Text>
+
+          {/* Visual Schedule Render */}
+          {!habit.schedule_type || habit.schedule_type === 'Every Day' ? (
+            <Text style={styles.scheduleText}>
+              Every Day • Target:{' '}
+              {habit.target_quantity || habit.targetQuantity} {habit.unit}
+            </Text>
+          ) : (
+            <>
+              <Text style={styles.scheduleText}>
+                Target: {habit.target_quantity || habit.targetQuantity}{' '}
+                {habit.unit}
+              </Text>
+
+              <View style={styles.scheduleVisualContainer}>
+                {(habit.schedule_type === 'Specific Days of Week' ||
+                  habit.schedule_type === 'Specific Days') &&
+                  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => {
+                    const isActive = (habit.schedule_value || '').includes(day);
+                    return (
+                      <View
+                        key={day}
+                        style={[
+                          styles.scheduleDayCircle,
+                          isActive && {
+                            backgroundColor: habitColor,
+                            borderColor: habitColor,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.scheduleDayText,
+                            isActive && styles.scheduleDayActiveText,
+                          ]}
+                        >
+                          {day[0]}
+                        </Text>
+                      </View>
+                    );
+                  })}
+
+                {habit.schedule_type === 'Specific Days of Month' &&
+                  (habit.schedule_value || '')
+                    .split(',')
+                    .map(d => d.trim())
+                    .slice(0, 7)
+                    .map((dayNum, i, arr) => (
+                      <View
+                        key={dayNum}
+                        style={[
+                          styles.scheduleDayCircle,
+                          {
+                            backgroundColor: habitColor,
+                            borderColor: habitColor,
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.scheduleDayText,
+                            styles.scheduleDayActiveText,
+                          ]}
+                        >
+                          {dayNum}
+                        </Text>
+                        {i === 6 &&
+                          arr.length <
+                            (habit.schedule_value || '').split(',').length && (
+                            <Text
+                              style={[
+                                styles.scheduleDayText,
+                                { marginLeft: 4 },
+                              ]}
+                            >
+                              +
+                            </Text>
+                          )}
+                      </View>
+                    ))}
+
+                {habit.schedule_type === 'Some Days per Period' && (
+                  <View style={styles.schedulePeriodBadge}>
+                    <Text style={styles.schedulePeriodText}>
+                      {(habit.schedule_value || '').replace('/', ' times / ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </>
+          )}
         </View>
 
         {/* Stats Grid */}
@@ -251,6 +382,74 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
             </Text>
           </View>
         </View>
+
+        {/* Inline Checklist */}
+        {habit.checklists && habit.checklists.length > 0 && (
+          <View style={styles.checklistContainer}>
+            {habit.checklists.map((item, idx) => {
+              const currentCompleted =
+                habit.checklist_progress &&
+                habit.checklist_progress[selectedDate]
+                  ? [...habit.checklist_progress[selectedDate]]
+                  : [];
+              const isChecked = currentCompleted.includes(idx);
+              const isLast = idx === habit.checklists.length - 1;
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.checklistItem,
+                    isLast && styles.checklistItemLast,
+                  ]}
+                  onPress={() => {
+                    // Optimistic state calculation to avoid race conditions
+                    let nextCompleted;
+                    if (!isChecked) {
+                      nextCompleted = [...currentCompleted, idx];
+                    } else {
+                      nextCompleted = currentCompleted.filter(i => i !== idx);
+                    }
+
+                    dispatch(
+                      toggleSubtask({
+                        habitId: habit.id,
+                        dateStr: selectedDate,
+                        subtaskIndex: idx,
+                        isCompleted: !isChecked,
+                      }),
+                    );
+
+                    // If all tasks are now complete and the habit wasn't fully completed for today yet
+                    if (
+                      nextCompleted.length === habit.checklists.length &&
+                      !habit.is_completed_on_date
+                    ) {
+                      setTimeout(() => {
+                        completeActionSheetRef.current?.show();
+                      }, 150);
+                    }
+                  }}
+                >
+                  {isChecked ? (
+                    <CheckCircle2 color={habitColor} size={RFValue(20)} />
+                  ) : (
+                    <Circle color={`${habitColor}60`} size={RFValue(20)} />
+                  )}
+                  <Text
+                    style={[
+                      styles.checklistText,
+                      isChecked && styles.checklistTextCompleted,
+                    ]}
+                  >
+                    {item.title || item}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         {/* Vertical Timeline */}
         <View style={styles.section}>
@@ -346,7 +545,9 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
 
           <View style={styles.calendarCard}>
             <Calendar
-              key={`${colors.background}-${colors.primary}-${isDark ? 'dark' : 'light'}`}
+              key={`${colors.background}-${colors.primary}-${
+                isDark ? 'dark' : 'light'
+              }`}
               markedDates={markedDates}
               dayComponent={CustomDay}
               theme={{
@@ -366,6 +567,148 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                 <ActivityIndicator size="large" color={colors.primary} />
               </View>
             )}
+          </View>
+        </ScrollView>
+      </ActionSheet>
+
+      {/* Complete Habit Action Sheet */}
+      <ActionSheet
+        ref={completeActionSheetRef}
+        containerStyle={styles.actionSheetContainer}
+        keyboardHandlerEnabled={true}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>Complete Habit</Text>
+            <TouchableOpacity
+              onPress={() => completeActionSheetRef.current?.hide()}
+              style={styles.sheetCloseBtn}
+            >
+              <X color={colors.textSecondary} size={RFValue(24)} />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.sheetContent}>
+            {/* Habit Summary */}
+            <View style={styles.habitItemContainer}>
+              <View
+                style={[
+                  styles.habitIconBg,
+                  { backgroundColor: `${habitColor}15` },
+                ]}
+              >
+                <HabitIcon color={habitColor} size={RFValue(22)} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.habitItemTitle} numberOfLines={1}>
+                  {habit.title}
+                </Text>
+                <Text style={styles.habitItemSub}>
+                  {habit.category_name || habit.category}
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Flame color="#EF4444" size={RFValue(14)} />
+                <Text
+                  style={{
+                    fontFamily: BOLD,
+                    fontSize: RFValue(14),
+                    color: '#EF4444',
+                    marginLeft: 4,
+                  }}
+                >
+                  {habit.streak || habit.currentStreak || 0}
+                </Text>
+              </View>
+            </View>
+
+            {/* Metric Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Metric</Text>
+              <View style={styles.metricInputContainer}>
+                <TextInput
+                  style={styles.metricInput}
+                  value={metric}
+                  onChangeText={setMetric}
+                  keyboardType="numeric"
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                />
+                <Text style={styles.metricUnit}>{habit.unit}</Text>
+              </View>
+            </View>
+
+            {/* Mood Selection */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Mood</Text>
+              <View style={styles.moodContainer}>
+                {['Good', 'Neutral', 'Bad'].map(m => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[styles.moodBtn, mood === m && styles.moodBtnActive]}
+                    onPress={() => setMood(m)}
+                  >
+                    <Text
+                      style={[
+                        styles.moodText,
+                        mood === m && styles.moodTextActive,
+                      ]}
+                    >
+                      {m}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Notes Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Notes (Optional)</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="How did it go?"
+                placeholderTextColor={colors.textSecondary}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            {/* Save Button */}
+            <TouchableOpacity
+              style={styles.saveBtn}
+              disabled={isCompleting}
+              onPress={async () => {
+                if (!metric) return;
+                setIsCompleting(true);
+                try {
+                  await dispatch(
+                    logHabitCompletion({
+                      id: habit.id,
+                      metric: Number(metric),
+                      mood,
+                      notes,
+                      dateStr: selectedDate,
+                    }),
+                  ).unwrap();
+                  completeActionSheetRef.current?.hide();
+                } catch (err) {
+                  console.error('Failed to log completion:', err);
+                } finally {
+                  setIsCompleting(false);
+                }
+              }}
+            >
+              {isCompleting ? (
+                <ActivityIndicator color={colors.surface} />
+              ) : (
+                <Text style={styles.saveBtnText}>Save Completion</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </ActionSheet>
