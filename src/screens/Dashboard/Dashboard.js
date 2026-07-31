@@ -40,6 +40,7 @@ import {
   undoHabitCompletion,
   toggleSubtask,
 } from '../../redux/Slice/HabitSlice';
+import ConfettiEffect from '../../components/ConfettiEffect';
 import { getHabitIconAndColor } from '../../constants/icons';
 import { HEIGHT, WIDTH } from '../../constants/config';
 
@@ -531,6 +532,7 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
   const dispatch = useDispatch();
   const { colors, isDark } = useTheme();
   const styles = React.useMemo(() => getStyles(colors), [colors]);
+  const confettiRef = useRef(null);
   const { habits, dashboardView } = useSelector(state => state.habits);
   const { phone, phone_number } = useSelector(state => state.auth);
   const userPhone = phone || phone_number;
@@ -634,6 +636,13 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
       }),
     );
     setActiveHabit(null);
+    
+    const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    if (selectedDate === todayStr) {
+      setTimeout(() => {
+        confettiRef.current?.trigger();
+      }, 400);
+    }
   };
 
   const handleToggleSubtask = (habit, subtaskIndex) => {
@@ -1327,6 +1336,8 @@ const DashboardWithoutHoc = ({ navigation, insets, setLoading }) => {
           </View>
         </View>
       </Modal>
+
+      <ConfettiEffect ref={confettiRef} />
     </View>
   );
 };

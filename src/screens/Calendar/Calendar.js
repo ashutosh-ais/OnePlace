@@ -18,10 +18,12 @@ import {
 import { getHabitIconAndColor } from '../../constants/icons';
 import withLoader from '../../hoc/withLoader';
 import getStyles from './Calendar.styles';
+import ConfettiEffect from '../../components/ConfettiEffect';
 
 const CalendarWithoutHoc = ({ insets, navigation }) => {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => getStyles(colors), [colors]);
+  const confettiRef = React.useRef(null);
   const [selectedDate, setSelectedDate] = useState(
     new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000)
       .toISOString()
@@ -320,6 +322,10 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
                               dateStr: selectedDate,
                             }),
                           );
+                          const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                          if (selectedDate === todayStr) {
+                            confettiRef.current?.trigger();
+                          }
                         } else {
                           dispatch(
                             undoHabitCompletion({
@@ -343,6 +349,7 @@ const CalendarWithoutHoc = ({ insets, navigation }) => {
           )}
         </View>
       </ScrollView>
+      <ConfettiEffect ref={confettiRef} />
     </View>
   );
 };

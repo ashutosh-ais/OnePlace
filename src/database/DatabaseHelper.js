@@ -419,13 +419,15 @@ export const recalculateStreak = async (db, habitId) => {
     let currentStreak = 0;
     let d = new Date();
     d.setHours(0, 0, 0, 0);
+    const tzOffset = d.getTimezoneOffset() * 60000;
+    let localMs = d.getTime() - tzOffset;
+    const DAY_MS = 86400000;
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     for (let i = 0; i < 365; i++) {
-      const dateStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
-        .toISOString()
-        .split('T')[0];
-      const dayName = days[d.getDay()];
+      const curDate = new Date(localMs);
+      const dateStr = curDate.toISOString().split('T')[0];
+      const dayName = days[curDate.getUTCDay()];
 
       let isRequired = true;
       // Original: Specific Days (legacy) and new Specific Days of Week
@@ -439,8 +441,8 @@ export const recalculateStreak = async (db, habitId) => {
         }
       } else if (habit.schedule_type === 'Specific Days of Month') {
         const val = habit.schedule_value || '';
-        const dayOfMonth = d.getDate().toString();
-        if (!val.split(',').includes(dayOfMonth)) {
+        const dayOfMonth = curDate.getUTCDate().toString();
+        if (!val.split(',').map(s => s.trim()).includes(dayOfMonth)) {
           isRequired = false;
         }
       } else if (habit.schedule_type === 'Some Days per Period') {
@@ -460,7 +462,7 @@ export const recalculateStreak = async (db, habitId) => {
         }
       }
 
-      d.setDate(d.getDate() - 1);
+      localMs -= DAY_MS;
     }
 
     await db.executeSql(`UPDATE Habits SET streak = ? WHERE id = ?`, [

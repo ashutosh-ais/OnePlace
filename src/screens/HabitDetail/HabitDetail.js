@@ -39,6 +39,7 @@ import {
 } from '../../redux/Slice/HabitSlice';
 import { ICON_MAP } from '../../constants/icons';
 import getStyles from './HabitDetail.styles';
+import ConfettiEffect from '../../components/ConfettiEffect';
 
 const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
   const { colors, isDark } = useTheme();
@@ -49,6 +50,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
   const habit = habits.find(h => h.id === routeHabit.id) || routeHabit;
   const actionSheetRef = useRef(null);
   const completeActionSheetRef = useRef(null);
+  const confettiRef = useRef(null);
   const [isBackfilling, setIsBackfilling] = useState(false);
 
   // States for completion modal
@@ -148,6 +150,14 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
               dateStr,
             }),
           ).unwrap();
+          
+          const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+          if (dateStr === todayStr) {
+            actionSheetRef.current?.hide();
+            setTimeout(() => {
+              confettiRef.current?.trigger();
+            }, 400);
+          }
         }
       } catch (err) {
         console.error('Failed to backfill:', err);
@@ -693,9 +703,17 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
               disabled={isCompleting}
               onPress={async () => {
                 if (!metric) return;
-                setIsCompleting(true);
+                completeActionSheetRef.current?.hide();
+                
+                const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+                if (selectedDate === todayStr) {
+                  setTimeout(() => {
+                    confettiRef.current?.trigger();
+                  }, 400);
+                }
+
                 try {
-                  await dispatch(
+                  dispatch(
                     logHabitCompletion({
                       id: habit.id,
                       metric: Number(metric),
@@ -703,12 +721,9 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                       notes,
                       dateStr: selectedDate,
                     }),
-                  ).unwrap();
-                  completeActionSheetRef.current?.hide();
+                  );
                 } catch (err) {
                   console.error('Failed to log completion:', err);
-                } finally {
-                  setIsCompleting(false);
                 }
               }}
             >
@@ -721,6 +736,8 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
           </View>
         </ScrollView>
       </ActionSheet>
+      
+      <ConfettiEffect ref={confettiRef} />
     </View>
   );
 };
