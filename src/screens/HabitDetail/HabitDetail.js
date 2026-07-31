@@ -21,6 +21,7 @@ import {
   TouchableOpacity,
   View,
   TextInput,
+  Image,
 } from 'react-native';
 import ActionSheet from 'react-native-actions-sheet';
 import { Calendar } from 'react-native-calendars';
@@ -264,20 +265,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
             {selectedDateLabel}
           </Text>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('EditHabit', { habit })}
-            style={styles.backBtn}
-          >
-            <Pencil color={habitColor} size={RFValue(18)} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => actionSheetRef.current?.show()}
-            style={styles.backBtn}
-          >
-            <CalendarIcon color={colors.text} size={RFValue(20)} />
-          </TouchableOpacity>
-        </View>
+        <View style={{ width: RFValue(34) }} />
       </View>
 
       <ScrollView
@@ -491,15 +479,44 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
           </View>
         )}
 
-        {/* Add Note Button */}
-        <TouchableOpacity
-          style={styles.addNoteBtn}
-          onPress={() => navigation.navigate('CreateNote', { habit, dateStr: selectedDate })}
-          activeOpacity={0.7}
-        >
-          <Pencil color={colors.primary} size={RFValue(14)} />
-          <Text style={styles.addNoteBtnText}>Add Note</Text>
-        </TouchableOpacity>
+        {/* Actions Row */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => completeActionSheetRef.current?.show()}
+            activeOpacity={0.7}
+          >
+            <CheckCircle2 color={habitColor} size={RFValue(20)} />
+            <Text style={styles.actionBtnText}>Done</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate('CreateNote', { habit, dateStr: selectedDate })}
+            activeOpacity={0.7}
+          >
+            <MessageSquare color={colors.primary} size={RFValue(20)} />
+            <Text style={styles.actionBtnText}>Note</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => navigation.navigate('EditHabit', { habit })}
+            activeOpacity={0.7}
+          >
+            <Pencil color={colors.primary} size={RFValue(20)} />
+            <Text style={styles.actionBtnText}>Edit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBtn}
+            onPress={() => actionSheetRef.current?.show()}
+            activeOpacity={0.7}
+          >
+            <CalendarIcon color={colors.primary} size={RFValue(20)} />
+            <Text style={styles.actionBtnText}>Dates</Text>
+          </TouchableOpacity>
+        </View>
 
         {/* Vertical Timeline */}
         <View style={styles.section}>
@@ -568,14 +585,37 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                         </View>
                       )}
                       {entry.habit_notes && entry.habit_notes.length > 0 && (
-                        entry.habit_notes.map((noteItem, nIdx) => (
-                          <View key={nIdx} style={styles.noteContainer}>
-                            {!!noteItem.title && <Text style={styles.noteTitle}>{noteItem.title}</Text>}
-                            <Text style={styles.noteContent} numberOfLines={3}>
-                              {noteItem.content_html ? noteItem.content_html.replace(/<[^>]+>/g, '').trim() : ''}
-                            </Text>
-                          </View>
-                        ))
+                        entry.habit_notes.map((noteItem, nIdx) => {
+                          const imgMatch = noteItem.content_html ? noteItem.content_html.match(/<img[^>]+src="([^">]+)"/) : null;
+                          const imgSrc = imgMatch ? imgMatch[1] : null;
+                          const textContent = noteItem.content_html ? noteItem.content_html.replace(/<[^>]+>/g, '').trim() : '';
+
+                          return (
+                            <TouchableOpacity 
+                              key={nIdx} 
+                              style={[styles.noteContainer, { borderColor: habitColor }]}
+                              onPress={() => navigation.navigate('CreateNote', { habit, dateStr: entry.date, existingNote: noteItem })}
+                              activeOpacity={0.7}
+                            >
+                              {!!noteItem.title && (
+                                <View style={[styles.noteTitleBg, { backgroundColor: `${habitColor}15`, borderBottomColor: `${habitColor}30` }]}>
+                                  <Text style={[styles.noteTitle, { color: habitColor }]}>{noteItem.title}</Text>
+                                </View>
+                              )}
+                              {!!textContent && (
+                                <Text style={styles.noteContent} numberOfLines={3}>
+                                  {textContent}
+                                </Text>
+                              )}
+                              {!!imgSrc && (
+                                <Image 
+                                  source={{ uri: imgSrc }} 
+                                  style={{ width: '100%', height: RFValue(120), resizeMode: 'contain', backgroundColor: colors.background }} 
+                                />
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })
                       )}
                     </View>
                   </View>

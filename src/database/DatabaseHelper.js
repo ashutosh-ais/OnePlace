@@ -652,3 +652,15 @@ export const addHabitNote = async (db, habitId, dateStr, title, contentHtml) => 
     throw error;
   }
 };
+
+export const updateHabitNote = async (db, noteId, title, contentHtml) => {
+  try {
+    await db.executeSql(
+      `UPDATE HabitNotes SET title = ?, content_html = ? WHERE id = ?`,
+      [title, contentHtml, noteId],
+    );
+  } catch (error) {
+    console.error('Update Habit Note Error:', error);
+    throw error;
+  }
+};

@@ -18,7 +18,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import DrawingCanvas from '../../components/DrawingCanvas/DrawingCanvas';
-import { saveHabitNote } from '../../redux/Slice/HabitSlice';
+import { saveHabitNote, editHabitNote } from '../../redux/Slice/HabitSlice';
 import { useTheme } from '../../theme/useTheme';
 import getStyles from './CreateNote.styles';
 
@@ -28,23 +28,36 @@ const CreateNote = ({ navigation, route }) => {
   const { colors } = useTheme();
   const styles = useMemo(() => getStyles(colors), [colors]);
 
-  const [title, setTitle] = useState('');
+  const habit = route.params?.habit;
+  const dateStr = route.params?.dateStr;
+  const existingNote = route.params?.existingNote;
+
+  const [title, setTitle] = useState(existingNote?.title || '');
+  const [initialContent] = useState(existingNote?.content_html || '');
   const richText = useRef(null);
   const [isDrawingVisible, setIsDrawingVisible] = useState(false);
 
-  const habit = route.params?.habit;
-  const dateStr = route.params?.dateStr;
-
   const handleSave = async () => {
     const contentHtml = await richText.current?.getContentHtml();
-    dispatch(
-      saveHabitNote({
-        habitId: habit?.id,
-        dateStr,
-        title,
-        contentHtml,
-      }),
-    );
+    
+    if (existingNote) {
+      dispatch(
+        editHabitNote({
+          noteId: existingNote.id,
+          title,
+          contentHtml,
+        }),
+      );
+    } else {
+      dispatch(
+        saveHabitNote({
+          habitId: habit?.id,
+          dateStr,
+          title,
+          contentHtml,
+        }),
+      );
+    }
     navigation.goBack();
   };
 
@@ -66,7 +79,7 @@ const CreateNote = ({ navigation, route }) => {
         >
           <ArrowLeft color={colors.text} size={RFValue(24)} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>New Note</Text>
+        <Text style={styles.headerTitle}>{existingNote ? 'Edit Note' : 'New Note'}</Text>
         <TouchableOpacity onPress={handleSave} style={styles.headerBtn}>
           <Text style={styles.saveBtnText}>Save</Text>
         </TouchableOpacity>
@@ -92,8 +105,6 @@ const CreateNote = ({ navigation, route }) => {
               iconTint={colors.textSecondary}
               selectedIconTint={colors.primary}
               actions={[
-                actions.undo,
-                actions.redo,
                 actions.setBold,
                 actions.setItalic,
                 actions.setUnderline,
@@ -102,16 +113,13 @@ const CreateNote = ({ navigation, route }) => {
                 actions.alignLeft,
                 actions.alignCenter,
                 actions.alignRight,
-                actions.alignFull,
-                actions.setStrikethrough,
-                actions.heading1,
-                actions.heading2,
-                actions.heading3,
-                actions.removeFormat,
+                actions.undo,
+                actions.redo,
               ]}
             />
             <RichEditor
               ref={richText}
+              initialContentHTML={initialContent}
               style={styles.editor}
               placeholder="Write your note here..."
               editorStyle={{
