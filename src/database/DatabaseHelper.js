@@ -664,3 +664,12 @@ export const updateHabitNote = async (db, noteId, title, contentHtml) => {
     throw error;
   }
 };
+
+export const deleteHabitNote = async (db, noteId) => {
+  try {
+    await db.executeSql(`DELETE FROM HabitNotes WHERE id = ?`, [noteId]);
+  } catch (error) {
+    console.error('Delete Habit Note Error:', error);
+    throw error;
+  }
+};

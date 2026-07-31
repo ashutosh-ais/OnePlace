@@ -13,6 +13,7 @@ import {
   Snowflake,
   X,
   XCircle,
+  Trash2,
 } from 'lucide-react-native';
 import {
   ActivityIndicator,
@@ -22,6 +23,7 @@ import {
   View,
   TextInput,
   Image,
+  Alert,
 } from 'react-native';
 import ActionSheet from 'react-native-actions-sheet';
 import { Calendar } from 'react-native-calendars';
@@ -37,6 +39,7 @@ import {
   logHabitCompletion,
   undoHabitCompletion,
   toggleSubtask,
+  removeHabitNote,
 } from '../../redux/Slice/HabitSlice';
 import { ICON_MAP } from '../../constants/icons';
 import getStyles from './HabitDetail.styles';
@@ -95,6 +98,7 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
   };
 
   const [optimisticMarks, setOptimisticMarks] = useState({});
+  const [showNotesOnly, setShowNotesOnly] = useState(false);
 
   useEffect(() => {
     setOptimisticMarks({});
@@ -520,11 +524,34 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
 
         {/* Vertical Timeline */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>History</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: RFValue(12) }}>
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>History</Text>
+            <TouchableOpacity 
+              onPress={() => setShowNotesOnly(!showNotesOnly)}
+              style={{
+                backgroundColor: showNotesOnly ? `${habitColor}20` : 'transparent',
+                paddingHorizontal: RFValue(10),
+                paddingVertical: RFValue(4),
+                borderRadius: RFValue(12),
+                borderWidth: 1,
+                borderColor: showNotesOnly ? habitColor : colors.border,
+              }}
+            >
+              <Text style={{ 
+                color: showNotesOnly ? habitColor : colors.textSecondary, 
+                fontFamily: SEMIBOLD,
+                fontSize: RFValue(12)
+              }}>
+                Notes Only
+              </Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.timelineContainer}>
             {combinedHistory &&
-              combinedHistory.map((entry, index) => {
-                const isLast = index === combinedHistory.length - 1;
+              combinedHistory
+                .filter(entry => !showNotesOnly || (entry.habit_notes && entry.habit_notes.length > 0))
+                .map((entry, index, arr) => {
+                const isLast = index === arr.length - 1;
                 return (
                   <View key={index} style={styles.timelineRow}>
                     {/* Timeline Line & Icon */}
@@ -597,11 +624,28 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                               onPress={() => navigation.navigate('CreateNote', { habit, dateStr: entry.date, existingNote: noteItem })}
                               activeOpacity={0.7}
                             >
-                              {!!noteItem.title && (
-                                <View style={[styles.noteTitleBg, { backgroundColor: `${habitColor}15`, borderBottomColor: `${habitColor}30` }]}>
-                                  <Text style={[styles.noteTitle, { color: habitColor }]}>{noteItem.title}</Text>
-                                </View>
-                              )}
+                              <View style={[styles.noteHeader, { backgroundColor: `${habitColor}15`, borderBottomColor: `${habitColor}30` }]}>
+                                <Text style={[styles.noteTitle, { color: habitColor, flex: 1 }]}>{noteItem.title || 'Note'}</Text>
+                                <TouchableOpacity
+                                  style={{ padding: 4 }}
+                                  onPress={() => {
+                                    Alert.alert(
+                                      'Delete Note',
+                                      'Are you sure you want to delete this note?',
+                                      [
+                                        { text: 'Cancel', style: 'cancel' },
+                                        {
+                                          text: 'Delete',
+                                          style: 'destructive',
+                                          onPress: () => dispatch(removeHabitNote(noteItem.id)),
+                                        },
+                                      ]
+                                    );
+                                  }}
+                                >
+                                  <Trash2 color="#EF4444" size={RFValue(14)} />
+                                </TouchableOpacity>
+                              </View>
                               {!!textContent && (
                                 <Text style={styles.noteContent} numberOfLines={3}>
                                   {textContent}

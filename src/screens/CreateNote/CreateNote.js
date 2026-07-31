@@ -2,6 +2,7 @@
 import { ArrowLeft, Palette } from 'lucide-react-native';
 import React, { useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
@@ -39,6 +40,15 @@ const CreateNote = ({ navigation, route }) => {
 
   const handleSave = async () => {
     const contentHtml = await richText.current?.getContentHtml();
+    
+    const isEmptyText = !contentHtml || contentHtml.replace(/<[^>]*>?/gm, '').trim().length === 0;
+    const hasImage = contentHtml && contentHtml.includes('<img');
+    const isEmptyTitle = !title || title.trim().length === 0;
+
+    if (isEmptyTitle && isEmptyText && !hasImage) {
+      Alert.alert('Empty Note', 'Please enter a title, some text, or draw an image before saving.');
+      return;
+    }
     
     if (existingNote) {
       dispatch(

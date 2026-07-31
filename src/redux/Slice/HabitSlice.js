@@ -14,6 +14,7 @@ import {
   toggleSubtaskCompletion,
   addHabitNote,
   updateHabitNote,
+  deleteHabitNote,
 } from '../../database/DatabaseHelper';
 
 export const initializeDatabase = createAsyncThunk(
@@ -177,6 +178,15 @@ export const editHabitNote = createAsyncThunk(
   async ({ noteId, title, contentHtml }, { dispatch }) => {
     const db = await getDBConnection();
     await updateHabitNote(db, noteId, title, contentHtml);
+    await dispatch(initializeDatabase()).unwrap();
+  },
+);
+
+export const removeHabitNote = createAsyncThunk(
+  'habits/removeHabitNote',
+  async (noteId, { dispatch }) => {
+    const db = await getDBConnection();
+    await deleteHabitNote(db, noteId);
     await dispatch(initializeDatabase()).unwrap();
   },
 );

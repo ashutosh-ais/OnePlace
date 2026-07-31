@@ -173,7 +173,10 @@ const getStyles = colors =>
       borderColor: colors.border,
       overflow: 'hidden',
     },
-    noteTitleBg: {
+    noteHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       paddingHorizontal: RFValue(10),
       paddingVertical: RFValue(6),
       borderBottomWidth: 1,
@@ -188,6 +191,7 @@ const getStyles = colors =>
       fontFamily: REGULAR,
       fontSize: RFValue(11),
       color: colors.textSecondary,
+      padding: RFValue(10),
     },
     actionsRow: {
       flexDirection: 'row',
