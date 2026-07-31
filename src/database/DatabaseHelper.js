@@ -72,6 +72,17 @@ export const createTables = async db => {
       UNIQUE(habit_id, date)
     );
   `;
+  const habitNotesTable = `
+    CREATE TABLE IF NOT EXISTS HabitNotes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      habit_id INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      title TEXT,
+      content_html TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (habit_id) REFERENCES Habits (id)
+    );
+  `;
 
   try {
     await db.executeSql(userTable);
@@ -79,6 +90,7 @@ export const createTables = async db => {
     await db.executeSql(habitTable);
     await db.executeSql(completionTable);
     await db.executeSql(checklistProgressTable);
+    await db.executeSql(habitNotesTable);
 
     // ── Schema Migrations ──────────────────────────────────────────────────
     // ALTER TABLE is safe to run repeatedly — we catch errors if the
@@ -289,6 +301,22 @@ export const getHabits = async (db, userId) => {
       allChecklistProgress[row.habit_id][row.date] = JSON.parse(row.completed_indices || '[]');
     }
 
+    const notesRes = await db.executeSql(
+      `SELECT id, habit_id, date, title, content_html, created_at FROM HabitNotes WHERE habit_id IN (SELECT id FROM Habits WHERE user_id = ?)`,
+      [userId],
+    );
+    const allNotes = {};
+    for (let i = 0; i < notesRes[0].rows.length; i++) {
+      const row = notesRes[0].rows.item(i);
+      if (!allNotes[row.habit_id]) {
+        allNotes[row.habit_id] = {};
+      }
+      if (!allNotes[row.habit_id][row.date]) {
+        allNotes[row.habit_id][row.date] = [];
+      }
+      allNotes[row.habit_id][row.date].push(row);
+    }
+
     const d = new Date();
     const todayStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
       .toISOString()
@@ -315,6 +343,7 @@ export const getHabits = async (db, userId) => {
 
         item.checklists = item.checklists ? JSON.parse(item.checklists) : [];
         item.checklist_progress = allChecklistProgress[item.id] || {};
+        item.habit_notes = allNotes[item.id] || {};
         item.history = allCompletions[item.id] || [];
         item.completed_today = item.history.some(h =>
           h.date.startsWith(todayStr),
@@ -605,6 +634,21 @@ export const toggleSubtaskCompletion = async (db, habitId, dateStr, subtaskIndex
     }
   } catch (error) {
     console.error('Toggle Subtask Completion Error:', error);
+    throw error;
+  }
+};
+
+export const addHabitNote = async (db, habitId, dateStr, title, contentHtml) => {
+  try {
+    const d = new Date();
+    const date = dateStr || new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+    
+    await db.executeSql(
+      `INSERT INTO HabitNotes (habit_id, date, title, content_html) VALUES (?, ?, ?, ?)`,
+      [habitId, date, title, contentHtml],
+    );
+  } catch (error) {
+    console.error('Add Habit Note Error:', error);
     throw error;
   }
 };

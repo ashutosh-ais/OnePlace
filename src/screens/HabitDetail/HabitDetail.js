@@ -99,6 +99,27 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
     setOptimisticMarks({});
   }, [habit?.history]);
 
+  const combinedHistory = useMemo(() => {
+    const historyMap = {};
+    if (habit?.history) {
+      habit.history.forEach(h => {
+        historyMap[h.date] = { ...h };
+      });
+    }
+    if (habit?.habit_notes) {
+      Object.keys(habit.habit_notes).forEach(date => {
+        if (!historyMap[date]) {
+          historyMap[date] = {
+            date,
+            status: 'note_only',
+          };
+        }
+        historyMap[date].habit_notes = habit.habit_notes[date];
+      });
+    }
+    return Object.values(historyMap).sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [habit?.history, habit?.habit_notes]);
+
   // Build marked dates — use habit color for completed entries
   const markedDates = React.useMemo(() => {
     const marks = {};
@@ -470,13 +491,23 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
           </View>
         )}
 
+        {/* Add Note Button */}
+        <TouchableOpacity
+          style={styles.addNoteBtn}
+          onPress={() => navigation.navigate('CreateNote', { habit, dateStr: selectedDate })}
+          activeOpacity={0.7}
+        >
+          <Pencil color={colors.primary} size={RFValue(14)} />
+          <Text style={styles.addNoteBtnText}>Add Note</Text>
+        </TouchableOpacity>
+
         {/* Vertical Timeline */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>History</Text>
           <View style={styles.timelineContainer}>
-            {habit.history &&
-              habit.history.map((entry, index) => {
-                const isLast = index === habit.history.length - 1;
+            {combinedHistory &&
+              combinedHistory.map((entry, index) => {
+                const isLast = index === combinedHistory.length - 1;
                 return (
                   <View key={index} style={styles.timelineRow}>
                     {/* Timeline Line & Icon */}
@@ -489,6 +520,9 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                       )}
                       {entry.status === 'frozen' && (
                         <Snowflake color="#3B82F6" size={RFValue(24)} />
+                      )}
+                      {entry.status === 'note_only' && (
+                        <MessageSquare color={colors.textSecondary} size={RFValue(24)} />
                       )}
                       {!isLast && (
                         <View
@@ -514,8 +548,9 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                           })}
                         </Text>
                         <Text style={styles.timelineStatus}>
-                          {entry.status.charAt(0).toUpperCase() +
-                            entry.status.slice(1)}
+                          {entry.status === 'note_only' 
+                            ? 'Note'
+                            : entry.status.charAt(0).toUpperCase() + entry.status.slice(1)}
                         </Text>
                       </View>
                       {entry.status === 'completed' && (
@@ -531,6 +566,16 @@ const HabitDetailWithoutHoc = ({ navigation, route, insets }) => {
                           />
                           <Text style={styles.notesText}>{entry.notes}</Text>
                         </View>
+                      )}
+                      {entry.habit_notes && entry.habit_notes.length > 0 && (
+                        entry.habit_notes.map((noteItem, nIdx) => (
+                          <View key={nIdx} style={styles.noteContainer}>
+                            {!!noteItem.title && <Text style={styles.noteTitle}>{noteItem.title}</Text>}
+                            <Text style={styles.noteContent} numberOfLines={3}>
+                              {noteItem.content_html ? noteItem.content_html.replace(/<[^>]+>/g, '').trim() : ''}
+                            </Text>
+                          </View>
+                        ))
                       )}
                     </View>
                   </View>

@@ -12,6 +12,7 @@ import {
   updateHabit,
   createTables,
   toggleSubtaskCompletion,
+  addHabitNote,
 } from '../../database/DatabaseHelper';
 
 export const initializeDatabase = createAsyncThunk(
@@ -157,6 +158,15 @@ export const editHabit = createAsyncThunk(
   async ({ habitId, fields }, { dispatch }) => {
     const db = await getDBConnection();
     await updateHabit(db, habitId, fields);
+    await dispatch(initializeDatabase()).unwrap();
+  },
+);
+
+export const saveHabitNote = createAsyncThunk(
+  'habits/saveHabitNote',
+  async ({ habitId, dateStr, title, contentHtml }, { dispatch }) => {
+    const db = await getDBConnection();
+    await addHabitNote(db, habitId, dateStr, title, contentHtml);
     await dispatch(initializeDatabase()).unwrap();
   },
 );

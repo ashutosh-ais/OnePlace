@@ -9,6 +9,7 @@ import TabNavigator from './TabNavigator';
 import HabitDetail from '../screens/HabitDetail/HabitDetail';
 import CreateHabit from '../screens/CreateHabit/CreateHabit';
 import EditHabit from '../screens/EditHabit/EditHabit';
+import CreateNote from '../screens/CreateNote/CreateNote';
 
 const Stack = createNativeStackNavigator();
 
@@ -52,6 +53,7 @@ const AppNavigator = () => {
           component={EditHabit}
           // options={{ animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen name="CreateNote" component={CreateNote} />
       </Stack.Navigator>
     </NavigationContainer>
   );

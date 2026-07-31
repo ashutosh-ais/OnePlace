@@ -1,0 +1,147 @@
+/* eslint-disable react-native/no-inline-styles */
+import { ArrowLeft, Palette } from 'lucide-react-native';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import {
+  actions,
+  RichEditor,
+  RichToolbar,
+} from 'react-native-pell-rich-editor';
+import { RFValue } from 'react-native-responsive-fontsize';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useDispatch } from 'react-redux';
+import DrawingCanvas from '../../components/DrawingCanvas/DrawingCanvas';
+import { saveHabitNote } from '../../redux/Slice/HabitSlice';
+import { useTheme } from '../../theme/useTheme';
+import getStyles from './CreateNote.styles';
+
+const CreateNote = ({ navigation, route }) => {
+  const insets = useSafeAreaInsets();
+  const dispatch = useDispatch();
+  const { colors } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
+  const [title, setTitle] = useState('');
+  const richText = useRef(null);
+  const [isDrawingVisible, setIsDrawingVisible] = useState(false);
+
+  const habit = route.params?.habit;
+  const dateStr = route.params?.dateStr;
+
+  const handleSave = async () => {
+    const contentHtml = await richText.current?.getContentHtml();
+    dispatch(
+      saveHabitNote({
+        habitId: habit?.id,
+        dateStr,
+        title,
+        contentHtml,
+      }),
+    );
+    navigation.goBack();
+  };
+
+  const handleInsertImage = base64Url => {
+    richText.current?.insertImage(base64Url);
+  };
+
+  return (
+    <View
+      style={[
+        styles.container,
+        { paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
+    >
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.headerBtn}
+        >
+          <ArrowLeft color={colors.text} size={RFValue(24)} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>New Note</Text>
+        <TouchableOpacity onPress={handleSave} style={styles.headerBtn}>
+          <Text style={styles.saveBtnText}>Save</Text>
+        </TouchableOpacity>
+      </View>
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.content}>
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Note Title"
+            placeholderTextColor={colors.textSecondary}
+            value={title}
+            onChangeText={setTitle}
+          />
+
+          <View style={styles.editorContainer}>
+            <RichToolbar
+              style={styles.toolbar}
+              editor={richText}
+              iconTint={colors.textSecondary}
+              selectedIconTint={colors.primary}
+              actions={[
+                actions.undo,
+                actions.redo,
+                actions.setBold,
+                actions.setItalic,
+                actions.setUnderline,
+                actions.insertBulletsList,
+                actions.insertOrderedList,
+                actions.alignLeft,
+                actions.alignCenter,
+                actions.alignRight,
+                actions.alignFull,
+                actions.setStrikethrough,
+                actions.heading1,
+                actions.heading2,
+                actions.heading3,
+                actions.removeFormat,
+              ]}
+            />
+            <RichEditor
+              ref={richText}
+              style={styles.editor}
+              placeholder="Write your note here..."
+              editorStyle={{
+                backgroundColor: colors.background,
+                color: colors.text,
+                placeholderColor: colors.textSecondary,
+              }}
+              useContainer={false}
+            />
+          </View>
+
+          <View style={styles.drawBtnContainer}>
+            <TouchableOpacity
+              style={styles.drawBtn}
+              onPress={() => setIsDrawingVisible(true)}
+            >
+              <Palette color={colors.primary} size={RFValue(18)} />
+              <Text style={styles.drawBtnText}>Draw on Canvas</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+
+      <DrawingCanvas
+        visible={isDrawingVisible}
+        onClose={() => setIsDrawingVisible(false)}
+        onInsertImage={handleInsertImage}
+      />
+    </View>
+  );
+};
+
+export default CreateNote;
